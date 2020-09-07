@@ -1,5 +1,5 @@
-"""DOMAIN = "vulcan"
-
+DOMAIN = "vulcan"
+"""
 
 def setup(hass, config):
     hass.states.set("vulcan.world", "Sing in successfully")
