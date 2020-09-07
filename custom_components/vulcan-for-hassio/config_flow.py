@@ -17,7 +17,7 @@ class vulcanFlowHandler(ConfigFlow, domain=DOMAIN):
         vulcan = 'test'
 
         if user_input is not None:
-            error = vulcan.is_vul(user_input['token'], user_input['symbol'], user_input['pin'])
+            error = vulcan + user_input['token'] + user_input['symbol'] + str(user_input['pin'])
             if not error:
                 return self.async_create_entry(title='vulcan',
                                                data=user_input['symbol'])
