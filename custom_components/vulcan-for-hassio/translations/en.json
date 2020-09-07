@@ -5,7 +5,7 @@
     },
     "step": {
       "user": {
-        "description": "Vulcan mobile app codes",
+        "description": "Login to your Vulcan Account using mobile app registration page.",
         "data": {
           "token": "Token",
           "symbol": "Symbol",
