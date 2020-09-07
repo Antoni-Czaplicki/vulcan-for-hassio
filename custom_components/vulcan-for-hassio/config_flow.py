@@ -3,7 +3,7 @@ import logging
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
 
-from . import DOMAIN, vulcan
+from . import DOMAIN, 
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ class vulcanFlowHandler(ConfigFlow, domain=DOMAIN):
         error = None
 
         if user_input is not None:
-            error = vulcan.is_vul(user_input['token'], user_input['symbol'], user_input['pin'])
+            """error = vulcan.is_vul(user_input['token'], user_input['symbol'], user_input['pin'])"""
             if not error:
                 return self.async_create_entry(title='vulcan',
                                                data=user_input['symbol'])
