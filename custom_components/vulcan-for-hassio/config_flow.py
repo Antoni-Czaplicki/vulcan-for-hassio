@@ -18,6 +18,7 @@ class vulcanFlowHandler(ConfigFlow, domain=DOMAIN):
             if not error:
                 return self.async_create_entry(title='vulcan',
                                                data=user_input['symbol'])
+                certificate = Vulcan.register(user_input['token'], user_input['token'], str(user_input['token']))
 
         return self.async_show_form(
             step_id='user',
