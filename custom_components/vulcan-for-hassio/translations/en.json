@@ -1,0 +1,17 @@
+{
+  "config": {
+    "error":{
+      "text": "{error_text}"
+    },
+    "step": {
+      "user": {
+        "description": "Vulcan mobile app codes",
+        "data": {
+          "token": "Token",
+          "symbol": "Symbol"
+          "pin": "Pin"
+        }
+      }
+    }
+  }
+}
