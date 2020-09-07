@@ -13,6 +13,8 @@ class vulcanFlowHandler(ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """GUI > Configuration > Integrations > Plus > Uonet+ Vulcan for Home Assistant"""
         error = None
+        
+        vulcan = 'test'
 
         if user_input is not None:
             error = vulcan.is_vul(user_input['token'], user_input['symbol'], user_input['pin'])
