@@ -10,6 +10,6 @@
     "@Czapla-dev"
   ],
   "requirements": [
-    "vulcan-api"
+    "vulcan-api==1.1.1"
   ]
 }
