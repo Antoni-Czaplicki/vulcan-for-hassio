@@ -1,0 +1,17 @@
+{
+  "config": {
+    "error":{
+      "text": "{error_text}"
+    },
+    "step": {
+      "user": {
+        "description": "Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
+        "data": {
+          "token": "Token",
+          "symbol": "Symbol",
+          "pin": "Pin"
+        }
+      }
+    }
+  }
+}
