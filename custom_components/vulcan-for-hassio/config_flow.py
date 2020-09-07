@@ -4,7 +4,7 @@ from vulcan import Vulcan
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
 
-from . import DOMAIN, 
+from .const import DOMAIN, 
 
 _LOGGER = logging.getLogger(__name__)
 
