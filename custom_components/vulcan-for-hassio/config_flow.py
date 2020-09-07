@@ -15,10 +15,11 @@ class vulcanFlowHandler(ConfigFlow, domain=DOMAIN):
         error = None
 
         if user_input is not None:
-            return self.async_create_entry(title=user_input['symbol'],
+            error = register.reg(user_input['token'], user_input['symbol'], user_input['pin'])
+            if not error: 
+                return self.async_create_entry(title=user_input['symbol'],
                                            data=user_input)
-            a = register.reg(user_input['token'], user_input['symbol'], user_input['pin'])
-        
+
 
         return self.async_show_form(
             step_id='user',
