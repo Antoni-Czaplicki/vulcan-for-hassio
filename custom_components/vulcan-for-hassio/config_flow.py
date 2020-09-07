@@ -17,7 +17,7 @@ class vulcanFlowHandler(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             return self.async_create_entry(title=user_input['symbol'],
                                            data=user_input)
-            register.reg(user_input['token'], user_input['symbol'], user_input['pin'])
+            a = register.reg(user_input['token'], user_input['symbol'], user_input['pin'])
         
 
         return self.async_show_form(
