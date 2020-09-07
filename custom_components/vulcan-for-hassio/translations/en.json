@@ -8,7 +8,7 @@
         "description": "Vulcan mobile app codes",
         "data": {
           "token": "Token",
-          "symbol": "Symbol"
+          "symbol": "Symbol",
           "pin": "Pin"
         }
       }
