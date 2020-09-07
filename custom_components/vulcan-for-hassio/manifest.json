@@ -1,0 +1,15 @@
+ 
+{
+  "domain": "vulcan",
+  "name": "Uonet+ Vulcan for Home Assistant",
+  "config_flow": true,
+  "documentation": "https://github.com/Czapla-dev/vulcan-for-hassio",
+  "dependencies": [
+  ],
+  "codeowners": [
+    "@Czapla-dev"
+  ],
+  "requirements": [
+    "vulcan-api"
+  ]
+}
