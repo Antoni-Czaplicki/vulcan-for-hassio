@@ -1,4 +1,4 @@
-DOMAIN = "vulcan"
+"""DOMAIN = "vulcan"
 
 
 def setup(hass, config):
@@ -6,3 +6,4 @@ def setup(hass, config):
 
     # Return boolean to indicate that initialization was successful.
     return True
+"""
