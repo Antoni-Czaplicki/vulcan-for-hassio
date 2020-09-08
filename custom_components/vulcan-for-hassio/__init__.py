@@ -1,31 +1,38 @@
-import json
-from vulcan import Vulcan
-import logging
-import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNKNOWN
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.entity import Entity
-       
-        
+import asyncio
+from homeassistant import config_entries
+import homeassistant
+from homeassistant.helpers import config_validation as cv, entity_platform, service
+ 
 DOMAIN = "vulcan"
 
-def setup(hass, config):
-    hass.states.set("vulcan.test", "Sing in successfully")
+#def setup_platform(hass, config, add_devices, discovery_info=None):
+#    """Set up the sensor platform."""
+#    add_entities([ExampleSensor()])
 
-    # Return boolean to indicate that initialization was successful.
+def setup(hass, config):
+    """Your controller/hub specific code."""
+    # Data that you want to share with your platforms
+    hass.data[DOMAIN] = {
+        'temperature': 23
+    }
+
+    hass.helpers.discovery.load_platform('sensor', DOMAIN, {}, config)
+
     return True
 
-#class Lessons(device):
-#    @property
-#    def device_info(self) -> Dict[str, Any]:
-#        return {
-#            "identifiers": {
-#                (DOMAIN, config_entry.symbol)
-#            },
-#            "name": "Lessons",
-#            "manufacturer": "Uonet+",
-#            "sw_version": "0.1.0",
-#            "entry_type": "service",
-#        }
+async def async_setup_entry(hass, entry):
+    """Set up the media player platform for Sonos."""
+
+    platform = entity_platform.current_platform.get()
+
+    # This will call Entity.set_sleep_timer(sleep_time=VALUE)
+#    platform.async_register_entity_service(
+#        SERVICE_UPDATE_DATA,
+#        {
+#            vol.Required('update_data'): str,
+#        },
+#        "update_data",
+#    )
+
+#self.hass.async_add_job(hass.config_entries.async_forward_entry_setup(
+#    self.config_entry, 'sensor'))
