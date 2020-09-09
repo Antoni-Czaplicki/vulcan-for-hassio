@@ -2,8 +2,7 @@ from homeassistant.const import TEMP_CELSIUS
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
-from homeassistant.helpers import config_validation as cv, entity_platform, service
-import random
+from homeassistant.helpers import config_validation as cv, entity_platform,
 
 def get_lesson_info(self, int_number):
     with open('vulcan.json') as f:
