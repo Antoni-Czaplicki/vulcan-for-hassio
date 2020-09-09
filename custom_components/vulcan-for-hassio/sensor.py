@@ -1,13 +1,8 @@
-"""Platform for sensor integration."""
 from homeassistant.const import TEMP_CELSIUS
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
 from homeassistant.helpers import config_validation as cv, entity_platform, service
-"""
-with open('vulcan.json') as f:
-    certificate = json.load(f)
-client = Vulcan(certificate)"""
 
 def get_lesson_info(self, int_number):
     with open('vulcan.json') as f:
@@ -43,30 +38,23 @@ def get_lesson_info(self, int_number):
         if temp_dict['lesson'] == 'Informatyka':
             if temp_dict['group'] == it_group or temp_dict['group'] == 'None':
                 setattr(self, 'lesson_' + lesson, temp_dict)
-#                exec('lesson_' + lesson + " = temp_dict")
         elif temp_dict['lesson'] == 'J. angielski- p.rozsz':
             if temp_dict['group'] == en_group or temp_dict['group'] == 'None':
                 setattr(self, 'lesson_' + lesson, temp_dict)
-#                exec('lesson_' + lesson + " = temp_dict")
         elif temp_dict['lesson'] == 'Religia':
             if temp_dict['group'] == rel_group or temp_dict['group'] == 'None':
                 setattr(self, 'lesson_' + lesson, temp_dict)
-#                exec('lesson_' + lesson + " = temp_dict")
         elif temp_dict['lesson'] == 'Język niemiecki':
             if temp_dict['group'] == de_group or temp_dict['group'] == 'None':
                 setattr(self, 'lesson_' + lesson, temp_dict)
-#                exec('lesson_' + lesson + " = temp_dict")
         elif temp_dict['lesson'] == 'Wychowanie fizyczne':
             if temp_dict['group'] == pe_group or temp_dict['group'] == 'None':
                 setattr(self, 'lesson_' + lesson, temp_dict)
-#                exec('lesson_' + lesson + " = temp_dict")
         elif temp_dict['lesson'] == 'Język francuski':
             if temp_dict['group'] == fr_group or temp_dict['group'] == 'None':
                 setattr(self, 'lesson_' + lesson, temp_dict)
-#                exec('lesson_' + lesson + " = temp_dict")
         else:
             setattr(self, 'lesson_' + lesson, temp_dict)
-#            exec('lesson_' + lesson + " = temp_dict")
     lesson_ans = {}
     if self.lesson_1 ==  {}:
         self.lesson_1 = {'number': 1, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
@@ -109,9 +97,6 @@ def get_lesson_info(self, int_number):
         lesson_ans = self.lesson_9
     elif self.lesson_10['number'] == int_number:
         lesson_ans = self.lesson_10
-#    lesson_1 = {'lesson': 'test2'}
-#    exec("lesson_" + str(1) + " = temp_dict", globals(), locals() )
-#    setattr(self, 'lesson_ans', 'self.lesson_' + lesson_number)
     return lesson_ans
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -177,9 +162,14 @@ class Lesson2(Entity):
         self._state = None
 
     @property
-    def name(self):
-        """Return the name of the sensor."""
-        return 'Lesson 2'
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 2)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
 
     @property
     def icon(self):
@@ -223,12 +213,13 @@ class Lesson3(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 3)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -259,12 +250,13 @@ class Lesson4(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 4)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -295,12 +287,13 @@ class Lesson5(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 5)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -331,12 +324,13 @@ class Lesson6(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 6)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -369,12 +363,13 @@ class Lesson7(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 7)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -406,12 +401,13 @@ class Lesson8(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 8)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -443,12 +439,13 @@ class Lesson9(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 9)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -480,12 +477,13 @@ class Lesson10(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 10)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
