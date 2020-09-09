@@ -3,6 +3,7 @@ from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
 from homeassistant.helpers import config_validation as cv, entity_platform, service
+import random
 
 def get_lesson_info(self, int_number):
     with open('vulcan.json') as f:
@@ -99,6 +100,17 @@ def get_lesson_info(self, int_number):
         lesson_ans = self.lesson_10
     return lesson_ans
 
+
+def get_id(self):
+    with open('vulcan.json') as f:
+        certificate = json.load(f)
+    client = Vulcan(certificate)
+    for Student in client.get_students():
+        id = Student.id
+    return str(id)
+    
+
+    
 def setup_platform(hass, config, add_entities, discovery_info=None):
 #    Set up the sensor platform.
     if discovery_info is None:
@@ -132,7 +144,13 @@ class Lesson1(Entity):
         return 'mdi:timetable'
 
     @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_1_' + id
+
+    @property
     def device_state_attributes(self):
+        id = get_id(self)
         lesson_info = get_lesson_info(self, 1)
         atr = {
             "room": lesson_info['room'],
@@ -162,6 +180,16 @@ class Lesson2(Entity):
         self._state = None
 
     @property
+    def name(self):
+        """Return the name of the sensor."""
+        return 'Lesson 2'
+        
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_2_' + id
+     
+    @property
     def device_state_attributes(self):
         lesson_info = get_lesson_info(self, 2)
         atr = {
@@ -174,15 +202,6 @@ class Lesson2(Entity):
     @property
     def icon(self):
         return 'mdi:timetable'
-
-    @property
-    def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
-        }
-        return test
     
     @property
     def state(self):
@@ -206,6 +225,11 @@ class Lesson3(Entity):
     def name(self):
         """Return the name of the sensor."""
         return 'Lesson 3'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_3_' + id
 
     @property
     def icon(self):
@@ -245,6 +269,11 @@ class Lesson4(Entity):
         return 'Lesson 4'
 
     @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_4_' + id
+
+    @property
     def icon(self):
         return 'mdi:timetable'
 
@@ -282,6 +311,11 @@ class Lesson5(Entity):
         return 'Lesson 5'
 
     @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_5_' + id
+
+    @property
     def icon(self):
         return 'mdi:timetable'
 
@@ -317,6 +351,11 @@ class Lesson6(Entity):
     def name(self):
         """Return the name of the sensor."""
         return 'Lesson 6'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_6_' + id
 
     @property
     def icon(self):
@@ -358,6 +397,11 @@ class Lesson7(Entity):
         return 'Lesson 7'
 
     @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_7_' + id
+
+    @property
     def icon(self):
         return 'mdi:timetable'
 
@@ -394,6 +438,11 @@ class Lesson8(Entity):
     def name(self):
         """Return the name of the sensor."""
         return 'Lesson 8'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_8_' + id
 
     @property
     def icon(self):
@@ -434,6 +483,11 @@ class Lesson9(Entity):
         return 'Lesson 9'
 
     @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_9_' + id
+
+    @property
     def icon(self):
         return 'mdi:timetable'
 
@@ -470,6 +524,11 @@ class Lesson10(Entity):
     def name(self):
         """Return the name of the sensor."""
         return 'Lesson 10'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_10_' + id
 
     @property
     def icon(self):
