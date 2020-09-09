@@ -4,12 +4,115 @@ from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
 from homeassistant.helpers import config_validation as cv, entity_platform, service
-
+"""
 with open('vulcan.json') as f:
     certificate = json.load(f)
-client = Vulcan(certificate)
+client = Vulcan(certificate)"""
 
+def get_lesson_info(self, int_number):
+    with open('vulcan.json') as f:
+        certificate = json.load(f)
+    client = Vulcan(certificate)
 
+    self.lesson_1 = {}
+    self.lesson_2 = {}
+    self.lesson_3 = {}
+    self.lesson_4 = {}
+    self.lesson_5 = {}
+    self.lesson_6 = {}
+    self.lesson_7 = {}
+    self.lesson_8 = {}
+    self.lesson_9 = {}
+    self.lesson_10 = {}
+
+    en_group = '2A9'
+    it_group = 'I2'
+    rel_group = 'r22p'
+    de_group = '2NH'
+    fr_group = 'None'
+    pe_group = 'Wf-ch'
+    for Lesson in client.get_lessons():
+        temp_dict = {}
+        temp_dict['number'] = Lesson.number
+        lesson = str(Lesson.number)
+        temp_dict['lesson'] = Lesson.subject.name
+        temp_dict['room'] = Lesson.room
+        temp_dict['group'] = Lesson.group
+        temp_dict['teacher'] = Lesson.teacher.name
+        temp_dict['time'] = Lesson.time.from_.strftime("%H:%M") + '-' + Lesson.time.to.strftime("%H:%M")
+        if temp_dict['lesson'] == 'Informatyka':
+            if temp_dict['group'] == it_group or temp_dict['group'] == 'None':
+                setattr(self, 'lesson_' + lesson, temp_dict)
+#                exec('lesson_' + lesson + " = temp_dict")
+        elif temp_dict['lesson'] == 'J. angielski- p.rozsz':
+            if temp_dict['group'] == en_group or temp_dict['group'] == 'None':
+                setattr(self, 'lesson_' + lesson, temp_dict)
+#                exec('lesson_' + lesson + " = temp_dict")
+        elif temp_dict['lesson'] == 'Religia':
+            if temp_dict['group'] == rel_group or temp_dict['group'] == 'None':
+                setattr(self, 'lesson_' + lesson, temp_dict)
+#                exec('lesson_' + lesson + " = temp_dict")
+        elif temp_dict['lesson'] == 'Język niemiecki':
+            if temp_dict['group'] == de_group or temp_dict['group'] == 'None':
+                setattr(self, 'lesson_' + lesson, temp_dict)
+#                exec('lesson_' + lesson + " = temp_dict")
+        elif temp_dict['lesson'] == 'Wychowanie fizyczne':
+            if temp_dict['group'] == pe_group or temp_dict['group'] == 'None':
+                setattr(self, 'lesson_' + lesson, temp_dict)
+#                exec('lesson_' + lesson + " = temp_dict")
+        elif temp_dict['lesson'] == 'Język francuski':
+            if temp_dict['group'] == fr_group or temp_dict['group'] == 'None':
+                setattr(self, 'lesson_' + lesson, temp_dict)
+#                exec('lesson_' + lesson + " = temp_dict")
+        else:
+            setattr(self, 'lesson_' + lesson, temp_dict)
+#            exec('lesson_' + lesson + " = temp_dict")
+    lesson_ans = {}
+    if self.lesson_1 ==  {}:
+        self.lesson_1 = {'number': 1, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_2 ==  {}:
+        self.lesson_2 = {'number': 2, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_3 ==  {}:
+        self.lesson_3 = {'number': 3, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_4 ==  {}:
+        self.lesson_4 = {'number': 4, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_5 ==  {}:
+        self.lesson_5 = {'number': 5, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_6 ==  {}:
+        self.lesson_6 = {'number': 6, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_7 ==  {}:
+        self.lesson_7 = {'number': 7, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_8 ==  {}:
+        self.lesson_8 = {'number': 8, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_9 ==  {}:
+        self.lesson_9 = {'number': 9, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    if self.lesson_10 ==  {}:
+        self.lesson_10 = {'number': 10, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+    
+    if self.lesson_1['number'] == int_number:
+        lesson_ans = self.lesson_1
+    elif self.lesson_2['number'] == int_number:
+        lesson_ans = self.lesson_2
+    elif self.lesson_3['number'] == int_number:
+        lesson_ans = self.lesson_3
+    elif self.lesson_4['number'] == int_number:
+        lesson_ans = self.lesson_4
+    elif self.lesson_5['number'] == int_number:
+        lesson_ans = self.lesson_5
+    elif self.lesson_6['number'] == int_number:
+        lesson_ans = self.lesson_6
+    elif self.lesson_7['number'] == int_number:
+        lesson_ans = self.lesson_7
+    elif self.lesson_8['number'] == int_number:
+        lesson_ans = self.lesson_8
+    elif self.lesson_9['number'] == int_number:
+        lesson_ans = self.lesson_9
+    elif self.lesson_10['number'] == int_number:
+        lesson_ans = self.lesson_10
+#    lesson_1 = {'lesson': 'test2'}
+#    exec("lesson_" + str(1) + " = temp_dict", globals(), locals() )
+#    setattr(self, 'lesson_ans', 'self.lesson_' + lesson_number)
+    return lesson_ans
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
 #    Set up the sensor platform.
@@ -45,12 +148,13 @@ class Lesson1(Entity):
 
     @property
     def device_state_attributes(self):
-        test = {
-            "room": "3",
-            "teacher": "E. K",
-            "time": "8.00-8.45"
+        lesson_info = get_lesson_info(self, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
         }
-        return test
+        return atr
     
     @property
     def state(self):
@@ -60,48 +164,9 @@ class Lesson1(Entity):
     
     
     def update(self):
-        import json
-        from vulcan import Vulcan
-        with open('vulcan.json') as f:
-            certificate = json.load(f)
-        client = Vulcan(certificate)
-        en_group = '2A9'
-        it_group = 'I2'
-        rel_group = 'r22p'
-        de_group = '2NH'
-        fr_group = 'None'
-        pe_group = 'Wf-ch'
-        for Lesson in client.get_lessons():
-            temp_dict = {}
-            temp_dict['number'] = Lesson.number
-            lesson = str(Lesson.number)
-            temp_dict['lesson'] = Lesson.subject.name
-            temp_dict['room'] = Lesson.room
-            temp_dict['group'] = Lesson.group
-            temp_dict['teacher'] = Lesson.teacher.name
-            temp_dict['time'] = Lesson.time.from_.strftime("%H:%M"), '-', Lesson.time.to.strftime("%H:%M")
-            if temp_dict['lesson'] == 'Informatyka':
-                if temp_dict['group'] == it_group or temp_dict['group'] == 'None':
-                    exec('lesson_' + lesson + " = temp_dict")
-            elif temp_dict['lesson'] == 'J. angielski- p.rozsz':
-                if temp_dict['group'] == en_group or temp_dict['group'] == 'None':
-                    exec('lesson_' + lesson + " = temp_dict")
-            elif temp_dict['lesson'] == 'Religia':
-                if temp_dict['group'] == rel_group or temp_dict['group'] == 'None':
-                    exec('lesson_' + lesson + " = temp_dict")
-            elif temp_dict['lesson'] == 'Język niemiecki':
-                if temp_dict['group'] == de_group or temp_dict['group'] == 'None':
-                    exec('lesson_' + lesson + " = temp_dict")
-            elif temp_dict['lesson'] == 'Wychowanie fizyczne':
-                if temp_dict['group'] == pe_group or temp_dict['group'] == 'None':
-                    exec('lesson_' + lesson + " = temp_dict")
-            elif temp_dict['lesson'] == 'Język francuski':
-                if temp_dict['group'] == fr_group or temp_dict['group'] == 'None':
-                    exec('lesson_' + lesson + " = temp_dict")
-            else:
-                exec('lesson_' + lesson + " = temp_dict")
+        lesson_1 = get_lesson_info(self, 1)
     
-        self._state = str(lesson_1['lesson'])
+        self._state = lesson_1['lesson']
 
 
 class Lesson2(Entity):
@@ -135,10 +200,9 @@ class Lesson2(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_2 = get_lesson_info(self, 2)
+    
+        self._state = lesson_2['lesson']
 
 
 class Lesson3(Entity):
@@ -172,10 +236,9 @@ class Lesson3(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_3 = get_lesson_info(self, 3)
+    
+        self._state = lesson_3['lesson']
 
 
 class Lesson4(Entity):
@@ -209,10 +272,9 @@ class Lesson4(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_4 = get_lesson_info(self, 4)
+    
+        self._state = lesson_4['lesson']
 
 
 class Lesson5(Entity):
@@ -246,10 +308,9 @@ class Lesson5(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_5 = get_lesson_info(self, 5)
+    
+        self._state = lesson_5['lesson']
 
 
 class Lesson6(Entity):
@@ -283,10 +344,10 @@ class Lesson6(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_6 = get_lesson_info(self, 6)
+    
+        self._state = lesson_6['lesson']
+
 
 
 
@@ -321,10 +382,10 @@ class Lesson7(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_7 = get_lesson_info(self, 7)
+    
+        self._state = lesson_7['lesson']
+
 
 
 class Lesson8(Entity):
@@ -358,10 +419,10 @@ class Lesson8(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_8 = get_lesson_info(self, 8)
+    
+        self._state = lesson_8['lesson']
+
 
 
 class Lesson9(Entity):
@@ -395,10 +456,10 @@ class Lesson9(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_9 = get_lesson_info(self, 9)
+    
+        self._state = lesson_9['lesson']
+
 
 
 class Lesson10(Entity):
@@ -432,7 +493,6 @@ class Lesson10(Entity):
         return self._state
 
     def update(self):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = 'lesson'
+        lesson_10 = get_lesson_info(self, 10)
+    
+        self._state = lesson_10['lesson']
