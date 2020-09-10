@@ -3,7 +3,6 @@ from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
 from homeassistant.helpers import config_validation as cv, entity_platform, service
-import random
 from .const import (
     CONF_STUDENT_NAME,
 )
