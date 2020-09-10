@@ -2,7 +2,11 @@ from homeassistant.const import TEMP_CELSIUS
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
-from homeassistant.helpers import config_validation as cv, entity_platform,
+from homeassistant.helpers import config_validation as cv, entity_platform, service
+import random
+from .const import (
+    CONF_STUDENT_NAME,
+)
 
 def get_lesson_info(self, int_number):
     with open('vulcan.json') as f:
@@ -57,25 +61,25 @@ def get_lesson_info(self, int_number):
             setattr(self, 'lesson_' + lesson, temp_dict)
     lesson_ans = {}
     if self.lesson_1 ==  {}:
-        self.lesson_1 = {'number': 1, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_1 = {'number': 1, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_2 ==  {}:
-        self.lesson_2 = {'number': 2, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_2 = {'number': 2, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_3 ==  {}:
-        self.lesson_3 = {'number': 3, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_3 = {'number': 3, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_4 ==  {}:
-        self.lesson_4 = {'number': 4, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_4 = {'number': 4, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_5 ==  {}:
-        self.lesson_5 = {'number': 5, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_5 = {'number': 5, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_6 ==  {}:
-        self.lesson_6 = {'number': 6, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_6 = {'number': 6, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_7 ==  {}:
-        self.lesson_7 = {'number': 7, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_7 = {'number': 7, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_8 ==  {}:
-        self.lesson_8 = {'number': 8, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_8 = {'number': 8, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_9 ==  {}:
-        self.lesson_9 = {'number': 9, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_9 = {'number': 9, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     if self.lesson_10 ==  {}:
-        self.lesson_10 = {'number': 10, 'lesson': 'None', 'room': 'None', 'group': 'None', 'teacher': 'None', 'time': 'None'}
+        self.lesson_10 = {'number': 10, 'lesson': '-', 'room': '-', 'group': '-', 'teacher': '-', 'time': '-'}
     
     if self.lesson_1['number'] == int_number:
         lesson_ans = self.lesson_1
@@ -149,7 +153,6 @@ class Lesson1(Entity):
 
     @property
     def device_state_attributes(self):
-        id = get_id(self)
         lesson_info = get_lesson_info(self, 1)
         atr = {
             "room": lesson_info['room'],
