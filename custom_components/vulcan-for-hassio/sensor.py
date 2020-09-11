@@ -1,4 +1,3 @@
-from homeassistant.const import TEMP_CELSIUS
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
@@ -6,12 +5,16 @@ from homeassistant.helpers import config_validation as cv, entity_platform, serv
 from .const import (
     CONF_STUDENT_NAME,
 )
+from . import DOMAIN
 
 def get_lesson_info(self, int_number):
     with open('vulcan.json') as f:
         certificate = json.load(f)
     client = Vulcan(certificate)
-
+    for student in client.get_students():
+        if student.name == self.student_name:
+            client.set_student(student)
+            break
     self.lesson_1 = {}
     self.lesson_2 = {}
     self.lesson_3 = {}
@@ -28,7 +31,7 @@ def get_lesson_info(self, int_number):
     rel_group = 'r22p'
     de_group = '2NH'
     fr_group = 'None'
-    pe_group = 'Wf-ch'
+    pe_group = 'WF-ch'
     for Lesson in client.get_lessons():
         temp_dict = {}
         temp_dict['number'] = Lesson.number
@@ -117,23 +120,24 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 #    Set up the sensor platform.
     if discovery_info is None:
         return
-    add_entities([Lesson1()])
-    add_entities([Lesson2()])
-    add_entities([Lesson3()])
-    add_entities([Lesson4()])
-    add_entities([Lesson5()])
-    add_entities([Lesson6()])
-    add_entities([Lesson7()])
-    add_entities([Lesson8()])
-    add_entities([Lesson9()])
-    add_entities([Lesson10()])
+    add_entities([Lesson1(hass, config)])
+    add_entities([Lesson2(hass, config)])
+    add_entities([Lesson3(hass, config)])
+    add_entities([Lesson4(hass, config)])
+    add_entities([Lesson5(hass, config)])
+    add_entities([Lesson6(hass, config)])
+    add_entities([Lesson7(hass, config)])
+    add_entities([Lesson8(hass, config)])
+    add_entities([Lesson9(hass, config)])
+    add_entities([Lesson10(hass, config)])
  
 
 class Lesson1(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -149,7 +153,7 @@ class Lesson1(Entity):
     def unique_id(self):
         id = get_id(self)
         return 'lesson_1_' + id
-
+    
     @property
     def device_state_attributes(self):
         lesson_info = get_lesson_info(self, 1)
@@ -176,8 +180,9 @@ class Lesson1(Entity):
 class Lesson2(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -218,8 +223,9 @@ class Lesson2(Entity):
 class Lesson3(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -260,8 +266,9 @@ class Lesson3(Entity):
 class Lesson4(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -302,8 +309,9 @@ class Lesson4(Entity):
 class Lesson5(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -344,8 +352,9 @@ class Lesson5(Entity):
 class Lesson6(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -388,8 +397,9 @@ class Lesson6(Entity):
 class Lesson7(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -431,8 +441,9 @@ class Lesson7(Entity):
 class Lesson8(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -474,8 +485,9 @@ class Lesson8(Entity):
 class Lesson9(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
@@ -517,8 +529,9 @@ class Lesson9(Entity):
 class Lesson10(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self):
+    def __init__(self, hass, config):
         """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
         self._state = None
 
     @property
