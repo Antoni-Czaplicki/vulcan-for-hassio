@@ -5,6 +5,6 @@
 View your vulcan timetable as Home Assistant sensor and use it in automations.
 
 # Timetable
-
+You can get ten entities witch timetable.
 # Graders
 Available soon
