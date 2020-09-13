@@ -10,12 +10,11 @@ from .const import (  # pylint: disable=unused-import
 )
 
 
-
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
-        vol.Optional(CONF_GROUPS): {
-            cv.string: vol.Schema({
-                vol.Optional('angielski'): cv.string,
+        vol.Optional(CONF_GROUPS, default=None): {
+            cv.positive_int: vol.Schema({
+                vol.Optional('test'): cv.string,
             }, extra=vol.ALLOW_EXTRA),
         },
         vol.Optional(CONF_STUDENT_NAME, default=''): cv.string,
@@ -32,6 +31,7 @@ async def async_setup(hass, config) -> bool:
     
     hass.data[DOMAIN] = {
         'student_name': config[DOMAIN][CONF_STUDENT_NAME],
+        'groups': config[DOMAIN][CONF_GROUPS],
     }
     
     hass.helpers.discovery.load_platform('sensor', DOMAIN, {}, config)
