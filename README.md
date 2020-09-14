@@ -25,6 +25,8 @@ vulcan:
       'Religia': '1'
     6:
       'Informatyka': 'I1'
-```
+```  
+![screenshot](https://raw.githubusercontent.com/Czapla-dev/hassio-doc/master/images/Screenshot_2020-09-14-06-03-19-820_io.homeassistant.companion.android.jpg)
+
 # Graders
 Available soon
