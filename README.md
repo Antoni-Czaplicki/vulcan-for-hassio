@@ -1,6 +1,6 @@
 # Uonet+ Vulcan integration for Home Assistant
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 
 View your vulcan timetable as Home Assistant sensors and use it in automations.  
 
