@@ -9,7 +9,7 @@ from .const import (
 )
 from . import DOMAIN
 
-def get_lesson_info(self, int_number):
+def get_lesson_info(self, int_number, days_to_add=0):
     with open('vulcan.json') as f:
         certificate = json.load(f)
     client = Vulcan(certificate)
@@ -28,7 +28,7 @@ def get_lesson_info(self, int_number):
     self.lesson_9 = {}
     self.lesson_10 = {}
 
-    for Lesson in client.get_lessons():
+    for Lesson in client.get_lessons(datetime.now() + timedelta(days=days_to_add)):
         temp_dict = {}
         temp_dict['number'] = Lesson.number
         lesson = str(Lesson.number)
@@ -104,7 +104,32 @@ def get_id(self):
         id = Student.id
     return str(id)
     
+    
+def get_latest_grade(self):
+    with open('vulcan.json') as f:
+        certificate = json.load(f)
+    client = Vulcan(certificate)
+    for student in client.get_students():
+        if student.name == self.student_name:
+            client.set_student(student)
+            break
+    self.latest_grade = {}
 
+    for grade in client.get_grades():
+        temp_dict = {}
+        temp_dict['content'] = grade.content
+        temp_dict['weight'] = grade.weight
+        temp_dict['description'] = grade.description
+        temp_dict['value'] = grade.value
+        temp_dict['teacher'] = grade.teacher.name
+        temp_dict['subject'] = grade.subject.name
+        temp_dict['date'] = grade.date
+        setattr(self, 'latest_grade', temp_dict)
+                    
+    if self.latest_grade ==  {}:
+        self.latest_grade = {'content': '-', 'date': '-', 'weight': '-', 'description': '-', 'subkect': '-', 'teacher': '-', 'value': 0}
+    
+    return self.latest_grade
     
 def setup_platform(hass, config, add_entities, discovery_info=None):
 #    Set up the sensor platform.
@@ -120,20 +145,71 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities([Lesson8(hass)])
     add_entities([Lesson9(hass)])
     add_entities([Lesson10(hass)])
- 
+    add_entities([LatestGrade(hass)])
+    add_entities([Lesson_t_1(hass)])
+    add_entities([Lesson_t_2(hass)])
+    add_entities([Lesson_t_3(hass)])
+    add_entities([Lesson_t_4(hass)])
+    add_entities([Lesson_t_5(hass)])
+    add_entities([Lesson_t_6(hass)])
+    add_entities([Lesson_t_7(hass)])
+    add_entities([Lesson_t_8(hass)])
+    add_entities([Lesson_t_9(hass)])
+    add_entities([Lesson_t_10(hass)])
 
-class Lesson1(Entity):
-    """Representation of a Sensor."""
+ 
+class LatestGrade(Entity):
 
     def __init__(self, hass):
-        """Initialize the sensor."""
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Latest Grade'
+
+
+    @property
+    def icon(self):
+        return 'mdi:school-outline'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'grade_latest_' + id
+    
+    @property
+    def device_state_attributes(self):
+        grade_info = get_latest_grade(self)
+        atr = {
+            "weight": grade_info['weight'],
+            "teacher": grade_info['teacher'],
+            "date": grade_info['date']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    
+    
+    def update(self):
+        grade_latest = get_latest_grade(self)
+    
+        self._state = grade_latest['content']
+
+
+
+class Lesson1(Entity):
+
+    def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 1'
 
     @property
@@ -144,7 +220,7 @@ class Lesson1(Entity):
     def unique_id(self):
         id = get_id(self)
         return 'lesson_1_' + id
-
+    
     @property
     def device_state_attributes(self):
         lesson_info = get_lesson_info(self, 1)
@@ -157,7 +233,6 @@ class Lesson1(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     
@@ -169,17 +244,14 @@ class Lesson1(Entity):
 
 
 class Lesson2(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 2'
         
     @property
@@ -203,7 +275,6 @@ class Lesson2(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -213,17 +284,14 @@ class Lesson2(Entity):
 
 
 class Lesson3(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 3'
 
     @property
@@ -247,7 +315,6 @@ class Lesson3(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -257,17 +324,14 @@ class Lesson3(Entity):
 
 
 class Lesson4(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 4'
 
     @property
@@ -291,7 +355,6 @@ class Lesson4(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -301,17 +364,14 @@ class Lesson4(Entity):
 
 
 class Lesson5(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 5'
 
     @property
@@ -335,7 +395,6 @@ class Lesson5(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -345,17 +404,14 @@ class Lesson5(Entity):
 
 
 class Lesson6(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 6'
 
     @property
@@ -379,7 +435,6 @@ class Lesson6(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -391,17 +446,14 @@ class Lesson6(Entity):
 
 
 class Lesson7(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 7'
 
     @property
@@ -425,7 +477,6 @@ class Lesson7(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -436,17 +487,14 @@ class Lesson7(Entity):
 
 
 class Lesson8(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 8'
 
     @property
@@ -470,7 +518,6 @@ class Lesson8(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -481,17 +528,14 @@ class Lesson8(Entity):
 
 
 class Lesson9(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 9'
 
     @property
@@ -515,7 +559,6 @@ class Lesson9(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -526,17 +569,14 @@ class Lesson9(Entity):
 
 
 class Lesson10(Entity):
-    """Representation of a Sensor."""
 
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.groups = hass.data[DOMAIN]['groups']
         self._state = None
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return 'Lesson 10'
 
     @property
@@ -560,10 +600,417 @@ class Lesson10(Entity):
     
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
         lesson_10 = get_lesson_info(self, 10)
+    
+        self._state = lesson_10['lesson']
+
+
+
+class Lesson_t_1(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 1 (Tomorrow)'
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_1_' + id
+    
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 1, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    
+    
+    def update(self):
+        lesson_1 = get_lesson_info(self, 1, 1)
+    
+        self._state = lesson_1['lesson']
+
+
+class Lesson_t_2(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 2  (Tomorrow)'
+        
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_2_' + id
+     
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 2, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_2 = get_lesson_info(self, 2, 1)
+    
+        self._state = lesson_2['lesson']
+
+
+class Lesson_t_3(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 3  (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_3_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 3, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_3 = get_lesson_info(self, 3, 1)
+    
+        self._state = lesson_3['lesson']
+
+
+class Lesson_t_4(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 4 (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_4_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 4, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_4 = get_lesson_info(self, 4, 1)
+    
+        self._state = lesson_4['lesson']
+
+
+class Lesson_t_5(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 5 (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_5_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 5, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_5 = get_lesson_info(self, 5, 1)
+    
+        self._state = lesson_5['lesson']
+
+
+class Lesson_t_6(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 6 (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_6_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 6, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_6 = get_lesson_info(self, 6, 1)
+    
+        self._state = lesson_6['lesson']
+
+
+
+
+class Lesson_t_7(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 7 (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_7_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 7, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_7 = get_lesson_info(self, 7, 1)
+    
+        self._state = lesson_7['lesson']
+
+
+
+class Lesson_t_8(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 8  (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_8_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 8, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_8 = get_lesson_info(self, 8, 1)
+    
+        self._state = lesson_8['lesson']
+
+
+
+class Lesson_t_9(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 9 (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_9_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 9, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_9 = get_lesson_info(self, 9, 1)
+    
+        self._state = lesson_9['lesson']
+
+
+
+class Lesson_t_10(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.groups = hass.data[DOMAIN]['groups']
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Lesson 10 (Tomorrow)'
+
+    @property
+    def unique_id(self):
+        id = get_id(self)
+        return 'lesson_t_10_' + id
+
+    @property
+    def icon(self):
+        return 'mdi:timetable'
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = get_lesson_info(self, 10, 1)
+        atr = {
+            "room": lesson_info['room'],
+            "teacher": lesson_info['teacher'],
+            "time": lesson_info['time']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        return self._state
+
+    def update(self):
+        lesson_10 = get_lesson_info(self, 10, 1)
     
         self._state = lesson_10['lesson']
