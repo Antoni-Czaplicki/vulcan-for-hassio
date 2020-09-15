@@ -37,17 +37,17 @@ def get_lesson_info(self, int_number):
         temp_dict['group'] = Lesson.group
         temp_dict['teacher'] = Lesson.teacher.name
         temp_dict['time'] = Lesson.time.from_.strftime("%H:%M") + '-' + Lesson.time.to.strftime("%H:%M")
-        if self.groups is not None:
+        if self.groups is not {}:
             i = 1
             for x in self.groups:
                 setattr(self, 'group_subject_name', next(iter(self.groups[i])))
                 setattr(self, 'group_name', self.groups[i][next(iter(self.groups[i]))])
                 i+=1
                 if temp_dict['lesson'] == self.group_subject_name:
-                    if temp_dict['group'] == self.group_name or temp_dict['group'] == 'None':
+                    if temp_dict['group'] == self.group_name:
                         setattr(self, 'lesson_' + lesson, temp_dict)
                     
-        if temp_dict['group'] == None:
+        if temp_dict['group'] == 'None' or temp_dict['group'] == None:
             setattr(self, 'lesson_' + lesson, temp_dict)
 
 
