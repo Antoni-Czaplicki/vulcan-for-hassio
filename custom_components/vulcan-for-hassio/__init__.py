@@ -12,7 +12,7 @@ from .const import (  # pylint: disable=unused-import
 
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
-        vol.Optional(CONF_GROUPS, default=None): {
+        vol.Optional(CONF_GROUPS, default={}): {
             cv.positive_int: vol.Schema({
                 vol.Optional('test'): cv.string,
             }, extra=vol.ALLOW_EXTRA),
