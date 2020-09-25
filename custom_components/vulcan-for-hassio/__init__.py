@@ -2,14 +2,19 @@
 import asyncio
 from homeassistant import config_entries
 import homeassistant
+import json
+from vulcan import Vulcan
 import voluptuous as vol
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import config_validation as cv, entity_platform, service
-from .const import (  # pylint: disable=unused-import
+from .const import ( 
     CONF_STUDENT_NAME,
     CONF_GROUPS,
     DOMAIN,
 )
-
+with open('vulcan.json') as f:
+    certificate = json.load(f)
+client = Vulcan(certificate)
 
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
@@ -22,14 +27,16 @@ CONFIG_SCHEMA = vol.Schema({
     }, extra=vol.ALLOW_EXTRA),
 }, extra=vol.ALLOW_EXTRA)
 
-
 async def async_setup(hass, config) -> bool:
     vulcan: Optional[ConfigType] = config.get(DOMAIN)
     hass.data.setdefault(DOMAIN, {})
-
     if not vulcan:
         return True
-    
+    for student in client.get_students():
+        if student.name == config[DOMAIN][CONF_STUDENT_NAME]:
+            client.set_student(student)
+            break
+
     hass.data[DOMAIN] = {
         'student_name': config[DOMAIN][CONF_STUDENT_NAME],
         'groups': config[DOMAIN][CONF_GROUPS],
