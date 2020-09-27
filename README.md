@@ -4,7 +4,7 @@
 
 View your vulcan timetable as Home Assistant sensors and use it in automations.  
 
-To get started login as mobile app in Integrations page, and reboot Home Assistant.
+To get started login as mobile app in Integrations page, add ```vulcan:``` to your config.yaml file and reboot Home Assistant.
 
 # Timetable
 You can get ten entities witch timetable. 
