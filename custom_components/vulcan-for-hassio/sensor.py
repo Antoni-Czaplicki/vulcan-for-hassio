@@ -3,7 +3,7 @@ import json
 from vulcan import Vulcan
 from datetime import datetime  
 from datetime import timedelta 
-from .get_data import get_lesson_info, get_t_lesson_info, get_id, get_latest_grade
+from .get_data import get_lesson_info, get_t_lesson_info, get_id, get_latest_grade, get_latest_message
 from homeassistant.helpers import config_validation as cv, entity_platform, service
 from .const import (
     CONF_STUDENT_NAME,
@@ -26,6 +26,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities([Lesson9(hass)])
     add_entities([Lesson10(hass)])
     add_entities([LatestGrade(hass)])
+    add_entities([LatestMessage(hass)])
     add_entities([Lesson_t_1(hass)])
     add_entities([Lesson_t_2(hass)])
     add_entities([Lesson_t_3(hass)])
@@ -36,6 +37,51 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities([Lesson_t_8(hass)])
     add_entities([Lesson_t_9(hass)])
     add_entities([Lesson_t_10(hass)])
+    
+    
+class LatestMessage(Entity):
+
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]['student_name']
+        self.student_id = hass.data[DOMAIN]['student_id']
+        self.latest_message = get_latest_message(self)
+        self._state = None
+
+    @property
+    def name(self):
+        return 'Latest Message'
+
+
+    @property
+    def icon(self):
+        return 'mdi:message-arrow-left-outline'
+
+    @property
+    def unique_id(self):
+        id = self.student_id
+        return 'message_latest_' + id
+    
+    @property
+    def device_state_attributes(self):
+        msg_info = self.latest_message
+        atr = {
+            "Sender": msg_info['sender'],
+            "Date": msg_info['date'],
+            "Content": msg_info['content']
+        }
+        return atr
+    
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._state
+
+    
+    
+    def update(self):
+        grade_latest = self.latest_message
+    
+        self._state = grade_latest['title']
 
  
 class LatestGrade(Entity):
@@ -45,6 +91,7 @@ class LatestGrade(Entity):
         """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]['student_name']
         self.student_id = hass.data[DOMAIN]['student_id']
+        self.latest_grade = get_latest_grade(self)
         self._state = None
 
     @property
@@ -64,7 +111,7 @@ class LatestGrade(Entity):
     
     @property
     def device_state_attributes(self):
-        grade_info = get_latest_grade(self)
+        grade_info = self.latest_grade
         atr = {
             "weight": grade_info['weight'],
             "teacher": grade_info['teacher'],
@@ -80,7 +127,7 @@ class LatestGrade(Entity):
     
     
     def update(self):
-        grade_latest = get_latest_grade(self)
+        grade_latest = self.latest_grade
     
         self._state = grade_latest['content']
 
