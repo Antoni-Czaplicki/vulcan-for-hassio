@@ -5,7 +5,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 #from homeassistant.core import callback
 from . import DOMAIN, register
-
+from homeassistant.components import persistent_notification
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +18,8 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             error = register.reg(user_input['token'], user_input['symbol'], user_input['pin'])
             if not error: 
+                persistent_notification.async_create(self.hass, 'Integration has been installed, to complete the configuration add the "vulcan" key in the configuration.yaml file. Optionally, you can also set up groups there and select a student.',
+                                                 "Uonet+ Vulcan")
                 return self.async_create_entry(title=user_input['symbol'],
                                            data=user_input)
             CONF_SYMBOL = user_input['symbol']
