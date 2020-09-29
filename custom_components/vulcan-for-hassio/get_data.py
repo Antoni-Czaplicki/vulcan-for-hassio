@@ -184,3 +184,24 @@ def get_latest_grade(self):
         self.latest_grade = {'content': '-', 'date': '-', 'weight': '-', 'description': '-', 'subkect': '-', 'teacher': '-', 'value': 0}
     
     return self.latest_grade
+
+
+def get_latest_message(self):
+    self.latest_message = {}
+
+    for message in client.get_messages():
+        temp_dict = {}
+        temp_dict['title'] = message.title
+        temp_dict['content'] = message.content
+        if message.sender is not None:
+            temp_dict['sender'] = message.sender.name
+        else:
+            temp_dict['sender'] = 'Nieznany'
+        temp_dict['date'] = message.sent_date.strftime("%Y.%m.%d") + ' ' + message.sent_time.strftime("%H:%M")
+        setattr(self, 'latest_message', temp_dict)
+                    
+    if self.latest_message ==  {}:
+        self.latest_message = {'content': '-', 'date': '-', 'weight': '-', 'description': '-', 'subkect': '-', 'teacher': '-', 'value': 0}
+    
+    return self.latest_message
+    
