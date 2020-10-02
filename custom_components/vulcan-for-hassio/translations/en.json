@@ -10,8 +10,21 @@
           "token": "Token",
           "symbol": "Symbol",
           "pin": "Pin"
+            }
+         }
+       }
+     },
+  "options": {
+    "error": {
+      "error": "Error occurred"
+    },
+    "step": {
+      "init": {
+        "data": {
+          "notify": "Show notify wirh messages",
+          "student_name": "Select student"
+            }
         }
-      }
-    }
-  }
+     }
+   }
 }
