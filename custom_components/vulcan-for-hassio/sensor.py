@@ -1,12 +1,15 @@
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
+from homeassistant.components import persistent_notification
 from datetime import datetime  
+from homeassistant import config_entries
 from datetime import timedelta 
 from .get_data import get_lesson_info, get_t_lesson_info, get_id, get_latest_grade, get_latest_message
 from homeassistant.helpers import config_validation as cv, entity_platform, service
 from .const import (
     CONF_STUDENT_NAME,
+    CONF_NOTIFY,
 )
 from .__init__ import client
 from . import DOMAIN
@@ -45,6 +48,8 @@ class LatestMessage(Entity):
         self.student_name = hass.data[DOMAIN]['student_name']
         self.student_id = hass.data[DOMAIN]['student_id']
         self.latest_message = get_latest_message(self)
+        self.notify = hass.data[DOMAIN]['notify']
+        self.old_msg = self.latest_message['content']
         self._state = None
 
     @property
@@ -69,6 +74,7 @@ class LatestMessage(Entity):
             "Date": msg_info['date'],
             "Content": msg_info['content']
         }
+        
         return atr
     
     @property
@@ -79,9 +85,13 @@ class LatestMessage(Entity):
     
     
     def update(self):
-        grade_latest = self.latest_message
-    
-        self._state = grade_latest['title']
+        self.latest_message = get_latest_message(self)
+        message_latest = self.latest_message
+        if self.notify == True:
+            if self.old_msg != self.latest_message['content']:
+                persistent_notification.async_create(self.hass, self.latest_message['sender'] + ', ' + self.latest_message['date'] + '\n' + self.latest_message['content'], "Vulcan: " + self.latest_message['title'])
+                self.old_msg = self.latest_message['content']
+        self._state = message_latest['title']
 
  
 class LatestGrade(Entity):
@@ -115,7 +125,8 @@ class LatestGrade(Entity):
         atr = {
             "weight": grade_info['weight'],
             "teacher": grade_info['teacher'],
-            "date": grade_info['date']
+            "date": grade_info['date'],
+            "description": grade_info['description']
         }
         return atr
     
@@ -127,6 +138,7 @@ class LatestGrade(Entity):
     
     
     def update(self):
+        self.latest_grade = get_latest_grade(self)
         grade_latest = self.latest_grade
     
         self._state = grade_latest['content']
@@ -177,6 +189,7 @@ class Lesson1(Entity):
     
     
     def update(self):
+        self.lesson_1 = get_lesson_info(self)['lesson_1']
         self._state = self.lesson_1['lesson']
 
 
@@ -221,6 +234,7 @@ class Lesson2(Entity):
         return self._state
 
     def update(self):
+        self.lesson_2 = get_lesson_info(self)['lesson_2']
         self._state = self.lesson_2['lesson']
 
 
@@ -265,6 +279,7 @@ class Lesson3(Entity):
         return self._state
 
     def update(self):
+        self.lesson_3 = get_lesson_info(self)['lesson_3']
         self._state = self.lesson_3['lesson']
 
 
@@ -309,6 +324,7 @@ class Lesson4(Entity):
         return self._state
 
     def update(self):
+        self.lesson_4 = get_lesson_info(self)['lesson_4']
         self._state = self.lesson_4['lesson']
 
 
@@ -353,6 +369,7 @@ class Lesson5(Entity):
         return self._state
 
     def update(self):
+        self.lesson_5 = get_lesson_info(self)['lesson_5']
         self._state = self.lesson_5['lesson']
 
 
@@ -397,6 +414,7 @@ class Lesson6(Entity):
         return self._state
 
     def update(self):
+        self.lesson_6 = get_lesson_info(self)['lesson_6']
         self._state = self.lesson_6['lesson']
 
 
@@ -442,6 +460,7 @@ class Lesson7(Entity):
         return self._state
 
     def update(self):
+        self.lesson_7 = get_lesson_info(self)['lesson_7']
         self._state = self.lesson_7['lesson']
 
 
@@ -487,6 +506,7 @@ class Lesson8(Entity):
         return self._state
 
     def update(self):
+        self.lesson_8 = get_lesson_info(self)['lesson_8']
         self._state = self.lesson_8['lesson']
 
 
@@ -532,6 +552,7 @@ class Lesson9(Entity):
         return self._state
 
     def update(self):
+        self.lesson_9 = get_lesson_info(self)['lesson_9']
         self._state = self.lesson_9['lesson']
 
 
@@ -577,6 +598,7 @@ class Lesson10(Entity):
         return self._state
 
     def update(self):
+        self.lesson_10 = get_lesson_info(self)['lesson_10']
         self._state = self.lesson_10['lesson']
 
 
@@ -625,8 +647,7 @@ class Lesson_t_1(Entity):
     
     
     def update(self):
-#        lesson_1 = get_lesson_info(self, 1, 1)
-    
+        self.lesson_t_1 = get_t_lesson_info(self)['lesson_1']
         self._state = self.lesson_t_1['lesson']
 
 
@@ -671,6 +692,7 @@ class Lesson_t_2(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_2 = get_t_lesson_info(self)['lesson_2']
         self._state = self.lesson_t_2['lesson']
 
 
@@ -715,6 +737,7 @@ class Lesson_t_3(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_3 = get_t_lesson_info(self)['lesson_3']
         self._state = self.lesson_t_3['lesson']
 
 
@@ -759,6 +782,7 @@ class Lesson_t_4(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_4 = get_t_lesson_info(self)['lesson_4']
         self._state = self.lesson_t_4['lesson']
 
 
@@ -803,6 +827,7 @@ class Lesson_t_5(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_5 = get_t_lesson_info(self)['lesson_5']
         self._state = self.lesson_t_5['lesson']
 
 
@@ -847,6 +872,7 @@ class Lesson_t_6(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_6 = get_t_lesson_info(self)['lesson_6']
         self._state = self.lesson_t_6['lesson']
 
 
@@ -893,6 +919,7 @@ class Lesson_t_7(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_7 = get_t_lesson_info(self)['lesson_7']
         self._state = self.lesson_t_7['lesson']
 
 
@@ -938,6 +965,7 @@ class Lesson_t_8(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_8 = get_t_lesson_info(self)['lesson_8']
         self._state = self.lesson_t_8['lesson']
 
 
@@ -983,6 +1011,7 @@ class Lesson_t_9(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_9 = get_t_lesson_info(self)['lesson_9']
         self._state = self.lesson_t_9['lesson']
 
 
@@ -1028,4 +1057,5 @@ class Lesson_t_10(Entity):
         return self._state
 
     def update(self):
+        self.lesson_t_10 = get_t_lesson_info(self)['lesson_10']
         self._state = self.lesson_t_10['lesson']
