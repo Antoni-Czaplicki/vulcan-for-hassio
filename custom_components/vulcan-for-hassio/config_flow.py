@@ -32,6 +32,8 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """GUI > Configuration > Integrations > Plus > Uonet+ Vulcan for Home Assistant"""
+        if self._async_current_entries():
+            return self.async_abort(reason="single_instance_allowed")
         error = None
 
         if user_input is not None:
