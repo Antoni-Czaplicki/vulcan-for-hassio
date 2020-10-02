@@ -10,6 +10,7 @@ from .const import (
 from .__init__ import client
 from . import DOMAIN
 
+
 def get_lesson_info(self, days_to_add=0):
     self.lesson_1 = {}
     self.lesson_2 = {}
