@@ -10,12 +10,11 @@ To get started login as mobile app in Integrations page, add ```vulcan:``` to yo
 
 # Timetable
 You can get ten entities witch timetable. 
-If you want to configure groups and student for which the information will be displayed (default is first on vulcan list), you must add this to your configuration.yaml file to configure groups you must add numbers before group.  
+If you want to configure groups for which the information will be displayed you must add this to your configuration.yaml file to configure groups you must add numbers before group.  
   
 example:
 ```
 vulcan:
-  student_name: 'Jan Kowalski' #Optional, If is incorrect or none default is first in Vulcan list.
   groups: #optional
     1:
       'J. angielski- p.rozsz': 'A1'
@@ -34,3 +33,5 @@ vulcan:
 
 # Graders
 Actually one latest grade is available.
+# Messages
+Latest message sensor. You can activate notification in integration options.
