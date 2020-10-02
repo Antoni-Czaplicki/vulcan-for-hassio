@@ -1,7 +1,7 @@
 {
   "config": {
     "error":{
-      "text": "{error_text}"
+      "text": "Wprowadzono nieprawidłowe dane"
     },
     "step": {
       "user": {
@@ -10,8 +10,21 @@
           "token": "Token",
           "symbol": "Symbol",
           "pin": "Pin"
+            }
         }
-      }
-    }
+     }
+   },
+  "options": {
+    "error": {
+      "error": "Wystąpił Błąd"
+    },
+    "step": {
+      "init": {
+        "data": {
+          "notify": "Pokazuj powiadomienia o najnowszych wiadomościach",
+          "student_name": "Wybierz ucznia"
+            }
+        }
+     }
   }
 }
