@@ -1,5 +1,8 @@
 {
   "config": {
+    "abort": {
+      "single_instance_allowed": "Dozwolona jest tylko jedna konfiguracja Uonet+ Vulcan."
+    },
     "error":{
       "text": "Wprowadzono nieprawidłowe dane"
     },
