@@ -63,7 +63,7 @@ class VulcanOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry):
         """Initialize options flow."""
         self.config_entry = config_entry
-        self._servers = {}
+        self._students = {}
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
@@ -73,14 +73,14 @@ class VulcanOptionsFlowHandler(config_entries.OptionsFlow):
 #            server_name = user_input[CONF_STUDENT_NAME]
             return self.async_create_entry(title="", data=user_input)
 
-        self._servers = get_students_list()
+        self._students = get_students_list()
 
  
         options = {
             vol.Optional(
                 CONF_STUDENT_NAME,
-                default=self.config_entry.options.get(CONF_STUDENT_NAME, self._servers['0']),
-            ): vol.In(self._servers),
+                default=self.config_entry.options.get(CONF_STUDENT_NAME, self._students['0']),
+            ): vol.In(self._students),
             vol.Optional(
                 CONF_NOTIFY, default=self.config_entry.options.get(CONF_NOTIFY, False)
             ): bool,
