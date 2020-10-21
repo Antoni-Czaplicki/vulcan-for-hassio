@@ -24,7 +24,8 @@
     "step": {
       "init": {
         "data": {
-          "notify": "Show notify wirh messages",
+          "notify": "Show notifications when new message received",
+          "attendance_notify": "Show notifications about the latest attendance entries",
           "student_name": "Select student"
             }
         }
