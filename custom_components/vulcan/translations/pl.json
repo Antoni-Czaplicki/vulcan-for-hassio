@@ -25,6 +25,7 @@
       "init": {
         "data": {
           "notify": "Pokazuj powiadomienia o najnowszych wiadomościach",
+          "attendance_notify": "Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
           "student_name": "Wybierz ucznia"
             }
         }
