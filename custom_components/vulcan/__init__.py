@@ -20,13 +20,13 @@ from .const import (
     CONF_GROUPS,
     DOMAIN,
     CONF_NOTIFY,
+    CONF_ATTENDANCE_NOTIFY,
 )
 
 def get_students_list():
     with open('vulcan.json') as f:
         certificate = json.load(f)
     client = Vulcan(certificate)
-    students_list = {'0': '* Default'}
     for student in client.get_students():
         students_list[str(student.id)] = student.name
     return students_list
@@ -43,17 +43,6 @@ try:
 except FileNotFoundError:
     autherror=True
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Optional(CONF_GROUPS, default={}): {
-            cv.positive_int: vol.Schema({
-                vol.Optional('test'): cv.string,
-            }, extra=vol.ALLOW_EXTRA),
-        },
-        vol.Optional(CONF_STUDENT_NAME, default=''): cv.string,
-    }, extra=vol.ALLOW_EXTRA),
-}, extra=vol.ALLOW_EXTRA)
-
 async def async_setup(hass, config) -> bool:
     vulcan: Optional[ConfigType] = config.get(DOMAIN)
     hass.data.setdefault(DOMAIN, {})
@@ -63,15 +52,6 @@ async def async_setup(hass, config) -> bool:
         
     if not vulcan:
         return True
-    for student in client.get_students():
-        if student.name == config[DOMAIN][CONF_STUDENT_NAME]:
-            client.set_student(student)
-            break
-
-    hass.data[DOMAIN] = {
-        'student_name_old': config[DOMAIN][CONF_STUDENT_NAME],
-        'groups': config[DOMAIN][CONF_GROUPS],
-    }
     
     hass.helpers.discovery.load_platform('sensor', DOMAIN, {}, config)
     return True
@@ -79,11 +59,15 @@ async def async_setup(hass, config) -> bool:
 async def async_setup_entry(hass, config_entry):
     students_list = get_students_list()
     hass.data[DOMAIN]['notify'] = config_entry.options.get(CONF_NOTIFY)
-    hass.data[DOMAIN]['student_name'] = students_list[config_entry.options.get(CONF_STUDENT_NAME)]
-
+    hass.data[DOMAIN]['att_notify'] = config_entry.options.get(CONF_ATTENDANCE_NOTIFY)
+    try:
+        hass.data[DOMAIN]['student_name'] = students_list[config_entry.options.get(CONF_STUDENT_NAME)]
+    except KeyError:
+        hass.data[DOMAIN]['student_name'] = 'default'
     for student in client.get_students():
-        if student.name == students_list[config_entry.options.get(CONF_STUDENT_NAME)]:
+        if student.name == hass.data[DOMAIN]['student_name']:
             client.set_student(student)
             break
     platform = entity_platform.current_platform.get()
+    hass.helpers.discovery.load_platform('sensor', DOMAIN, {}, config_entry)
     return True
