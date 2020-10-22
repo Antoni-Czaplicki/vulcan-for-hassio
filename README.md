@@ -2,7 +2,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 
-View your vulcan latest grade and timetable as Home Assistant sensors and use it in automations.  
+View your vulcan data as Home Assistant sensors and use it in automations.  
 
 ## Get started
 To get started login as mobile app in Integrations page. In integration options you can select student and enable notifications. Actually only one student is supported.  
