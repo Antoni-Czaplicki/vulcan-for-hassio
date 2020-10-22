@@ -4,8 +4,6 @@
 
 View your vulcan latest grade and timetable as Home Assistant sensors and use it in automations.  
 
-## Informations
-
 ## Get started
 To get started login as mobile app in Integrations page. In integration options you can select student and enable notifications. Actually only one student is supported.  
 ![image](https://raw.githubusercontent.com/Czapla-dev/vulcan-for-hassio/master/docs/images/total.jpg)
