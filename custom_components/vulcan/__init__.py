@@ -28,6 +28,7 @@ def get_students_list():
     with open("vulcan.json") as f:
         certificate = json.load(f)
     client = Vulcan(certificate)
+    students_list = {}
     for student in client.get_students():
         students_list[str(student.id)] = student.name
     return students_list
