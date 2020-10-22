@@ -181,8 +181,8 @@ def get_latest_attendance(self):
     self.latest_attendance = {}
 
     for attendance in client.get_attendance():
+        temp_dict = {}
         if attendance.category != None:
-            temp_dict = {}
             temp_dict["content"] = attendance.category.name
             temp_dict["lesson_name"] = attendance.subject.name
             temp_dict["lesson_number"] = attendance.time.number
@@ -196,7 +196,7 @@ def get_latest_attendance(self):
                 attendance.date, attendance.time.from_
             )
 
-        setattr(self, "latest_attendance", temp_dict)
+    setattr(self, "latest_attendance", temp_dict)
 
     if self.latest_attendance == {}:
         self.latest_attendance = {
@@ -223,7 +223,7 @@ def get_latest_grade(self):
         temp_dict["teacher"] = grade.teacher.name
         temp_dict["subject"] = grade.subject.name
         temp_dict["date"] = grade.date
-        setattr(self, "latest_grade", temp_dict)
+    setattr(self, "latest_grade", temp_dict)
 
     if self.latest_grade == {}:
         self.latest_grade = {
@@ -255,7 +255,7 @@ def get_latest_message(self):
             + " "
             + message.sent_time.strftime("%H:%M")
         )
-        setattr(self, "latest_message", temp_dict)
+    setattr(self, "latest_message", temp_dict)
 
     if self.latest_message == {}:
         self.latest_message = {
