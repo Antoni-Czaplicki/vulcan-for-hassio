@@ -95,6 +95,7 @@ class LatestAttendance(Entity):
         if self.att_notify == True:
             if (
                 self.latest_attendance["content"] != "obecność"
+                self.latest_attendance["content"] != "-"
                 and self.old_att < self.latest_attendance["datetime"]
             ):
                 persistent_notification.async_create(
