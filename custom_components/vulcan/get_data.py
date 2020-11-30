@@ -175,7 +175,22 @@ def get_id():
     for Student in client.get_students():
         id = Student.id
     return str(id)
-
+    
+def get_student_info(student_name):
+    student_info={}
+    for student in client.get_students():
+        if student.name == student_name:
+            id = student.id
+            class_ = student.class_.name
+            school = student.school.name 
+        else: 
+            id = student.id
+            class_ = student.class_.name
+            school = student.school.name 
+    student_info['id']=id
+    student_info['class']=class_
+    student_info['school']=school
+    return student_info
 
 def get_latest_attendance(self):
     self.latest_attendance = {}
@@ -195,8 +210,7 @@ def get_latest_attendance(self):
             temp_dict["datetime"] = datetime.datetime.combine(
                 attendance.date, attendance.time.from_
             )
-
-    setattr(self, "latest_attendance", temp_dict)
+        setattr(self, "latest_attendance", temp_dict)
 
     if self.latest_attendance == {}:
         self.latest_attendance = {
@@ -223,7 +237,7 @@ def get_latest_grade(self):
         temp_dict["teacher"] = grade.teacher.name
         temp_dict["subject"] = grade.subject.name
         temp_dict["date"] = grade.date
-    setattr(self, "latest_grade", temp_dict)
+        setattr(self, "latest_grade", temp_dict)
 
     if self.latest_grade == {}:
         self.latest_grade = {
@@ -255,7 +269,7 @@ def get_latest_message(self):
             + " "
             + message.sent_time.strftime("%H:%M")
         )
-    setattr(self, "latest_message", temp_dict)
+        setattr(self, "latest_message", temp_dict)
 
     if self.latest_message == {}:
         self.latest_message = {
