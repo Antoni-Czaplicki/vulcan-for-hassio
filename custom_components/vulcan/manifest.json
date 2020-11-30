@@ -3,11 +3,11 @@
   "domain": "vulcan",
   "name": "Uonet+ Vulcan for Home Assistant",
   "config_flow": true,
-  "documentation": "https://github.com/Czapla-dev/vulcan-for-hassio",
+  "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
   "dependencies": [
   ],
   "codeowners": [
-    "@Czapla-dev"
+    "@Antoni-Czaplicki"
   ],
   "requirements": [
     "vulcan-api==1.2"
