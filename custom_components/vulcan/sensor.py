@@ -1,6 +1,7 @@
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
+from homeassistant.core import ServiceCall
 from homeassistant.components import persistent_notification
 from datetime import datetime
 from homeassistant import config_entries
@@ -11,43 +12,77 @@ from .get_data import (
     get_latest_grade,
     get_latest_message,
     get_latest_attendance,
+    get_student_info,
 )
 from homeassistant.helpers import config_validation as cv, entity_platform, service
 from .const import (
     CONF_STUDENT_NAME,
     CONF_NOTIFY,
+    SEND_MESSAGE_SERVICE_SCHEMA,
 )
 from .__init__ import client
 from . import DOMAIN
 
+try:
+    vulcan_error = False
+    with open("vulcan.json") as f:
+        certificate = json.load(f)
+    client = Vulcan(certificate)
+except:
+    vulcan_error = True
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    if discovery_info is None:
-        return
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
     hass.data[DOMAIN]["student_id"] = get_id()
-    add_entities([Lesson1(hass)])
-    add_entities([Lesson2(hass)])
-    add_entities([Lesson3(hass)])
-    add_entities([Lesson4(hass)])
-    add_entities([Lesson5(hass)])
-    add_entities([Lesson6(hass)])
-    add_entities([Lesson7(hass)])
-    add_entities([Lesson8(hass)])
-    add_entities([Lesson9(hass)])
-    add_entities([Lesson10(hass)])
-    add_entities([LatestGrade(hass)])
-    add_entities([LatestMessage(hass)])
-    add_entities([LatestAttendance(hass)])
-    add_entities([Lesson_t_1(hass)])
-    add_entities([Lesson_t_2(hass)])
-    add_entities([Lesson_t_3(hass)])
-    add_entities([Lesson_t_4(hass)])
-    add_entities([Lesson_t_5(hass)])
-    add_entities([Lesson_t_6(hass)])
-    add_entities([Lesson_t_7(hass)])
-    add_entities([Lesson_t_8(hass)])
-    add_entities([Lesson_t_9(hass)])
-    add_entities([Lesson_t_10(hass)])
+    hass.data[DOMAIN]["student_info"] = get_student_info(
+        hass.data[DOMAIN]["student_name"]
+    )
+    async_add_entities([Lesson1(hass)])
+    async_add_entities([Lesson2(hass)])
+    async_add_entities([Lesson3(hass)])
+    async_add_entities([Lesson4(hass)])
+    async_add_entities([Lesson5(hass)])
+    async_add_entities([Lesson6(hass)])
+    async_add_entities([Lesson7(hass)])
+    async_add_entities([Lesson8(hass)])
+    async_add_entities([Lesson9(hass)])
+    async_add_entities([Lesson10(hass)])
+    async_add_entities([LatestGrade(hass)])
+    async_add_entities([LatestMessage(hass)])
+    async_add_entities([LatestAttendance(hass)])
+    async_add_entities([Lesson_t_1(hass)])
+    async_add_entities([Lesson_t_2(hass)])
+    async_add_entities([Lesson_t_3(hass)])
+    async_add_entities([Lesson_t_4(hass)])
+    async_add_entities([Lesson_t_5(hass)])
+    async_add_entities([Lesson_t_6(hass)])
+    async_add_entities([Lesson_t_7(hass)])
+    async_add_entities([Lesson_t_8(hass)])
+    async_add_entities([Lesson_t_9(hass)])
+    async_add_entities([Lesson_t_10(hass)])
+    vs = VulcanServices(hass)
+    hass.services.async_register(DOMAIN, "send_message", vs.send_message)
+
+
+class VulcanServices:
+    def __init__(self, hass):
+        self._hass = hass
+        x = 0
+
+    def send_message(self, call):
+        message_data = call.data
+        SEND_MESSAGE_SERVICE_SCHEMA
+        persistent_notification.async_create(
+            self._hass,
+            "Id: "
+            + str(call.data.get("teacher"))
+            + ", Title: "
+            + call.data.get("title")
+            + ", Content: "
+            + call.data.get("content"),
+            "Vulcan: testing",
+        )
+        return
 
 
 class LatestAttendance(Entity):
@@ -86,7 +121,6 @@ class LatestAttendance(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
@@ -147,7 +181,7 @@ class LatestMessage(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
+        self._state = self.latest_message["title"]
         return self._state
 
     def update(self):
@@ -169,18 +203,14 @@ class LatestMessage(Entity):
 
 
 class LatestGrade(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.latest_grade = get_latest_grade(self)
-        self._state = None
+        self._state = self.latest_grade["content"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Latest Grade"
 
     @property
@@ -205,31 +235,24 @@ class LatestGrade(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
         self.latest_grade = get_latest_grade(self)
-        grade_latest = self.latest_grade
-
-        self._state = grade_latest["content"]
+        self._state = self.latest_grade["content"]
 
 
 class Lesson1(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
-        self.student_name = hass.data[DOMAIN]["student_name"]
-
         hass.data[DOMAIN]["lessons"] = get_lesson_info(self)
+        self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self._state = None
-        self.lesson_1 = hass.data[DOMAIN]["lessons"]["lesson_1"]
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_1"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 1"
 
     @property
@@ -243,7 +266,7 @@ class Lesson1(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_1
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -254,28 +277,32 @@ class Lesson1(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self.student_id)},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
-        self.lesson_1 = get_lesson_info(self)["lesson_1"]
-        self._state = self.lesson_1["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_1"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson2(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_2 = hass.data[DOMAIN]["lessons"]["lesson_2"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_2"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 2"
 
     @property
@@ -285,7 +312,7 @@ class Lesson2(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_2
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -300,28 +327,22 @@ class Lesson2(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_2 = get_lesson_info(self)["lesson_2"]
-        self._state = self.lesson_2["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_2"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson3(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_3 = hass.data[DOMAIN]["lessons"]["lesson_3"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_3"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 3"
 
     @property
@@ -335,7 +356,7 @@ class Lesson3(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_3
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -346,28 +367,22 @@ class Lesson3(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_3 = get_lesson_info(self)["lesson_3"]
-        self._state = self.lesson_3["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_3"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson4(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_4 = hass.data[DOMAIN]["lessons"]["lesson_4"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_4"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 4"
 
     @property
@@ -381,7 +396,7 @@ class Lesson4(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_4
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -392,28 +407,22 @@ class Lesson4(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_4 = get_lesson_info(self)["lesson_4"]
-        self._state = self.lesson_4["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_4"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson5(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_5 = hass.data[DOMAIN]["lessons"]["lesson_5"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_5"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 5"
 
     @property
@@ -427,7 +436,7 @@ class Lesson5(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_5
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -438,28 +447,22 @@ class Lesson5(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_5 = get_lesson_info(self)["lesson_5"]
-        self._state = self.lesson_5["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_5"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson6(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_6 = hass.data[DOMAIN]["lessons"]["lesson_6"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_6"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 6"
 
     @property
@@ -473,7 +476,7 @@ class Lesson6(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_6
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -484,28 +487,22 @@ class Lesson6(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_6 = get_lesson_info(self)["lesson_6"]
-        self._state = self.lesson_6["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_6"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson7(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_7 = hass.data[DOMAIN]["lessons"]["lesson_7"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_7"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 7"
 
     @property
@@ -519,7 +516,7 @@ class Lesson7(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_7
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -530,28 +527,22 @@ class Lesson7(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_7 = get_lesson_info(self)["lesson_7"]
-        self._state = self.lesson_7["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_7"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson8(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_8 = hass.data[DOMAIN]["lessons"]["lesson_8"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_8"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 8"
 
     @property
@@ -565,7 +556,7 @@ class Lesson8(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_8
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -576,28 +567,22 @@ class Lesson8(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_8 = get_lesson_info(self)["lesson_8"]
-        self._state = self.lesson_8["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_8"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson9(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_9 = hass.data[DOMAIN]["lessons"]["lesson_9"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_9"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 9"
 
     @property
@@ -611,7 +596,7 @@ class Lesson9(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_9
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -622,28 +607,22 @@ class Lesson9(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_9 = get_lesson_info(self)["lesson_9"]
-        self._state = self.lesson_9["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_9"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson10(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_10 = hass.data[DOMAIN]["lessons"]["lesson_10"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_10"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 10"
 
     @property
@@ -657,7 +636,7 @@ class Lesson10(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_10
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -668,29 +647,23 @@ class Lesson10(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_10 = get_lesson_info(self)["lesson_10"]
-        self._state = self.lesson_10["lesson"]
+        self.lesson = get_lesson_info(self)["lesson_10"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_1(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
         hass.data[DOMAIN]["lessons_t"] = get_lesson_info(self, 1)
-        self.lesson_t_1 = hass.data[DOMAIN]["lessons_t"]["lesson_1"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_1"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 1 (Tomorrow)"
 
     @property
@@ -704,7 +677,7 @@ class Lesson_t_1(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_1
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -715,28 +688,22 @@ class Lesson_t_1(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_1 = get_lesson_info(self, 1)["lesson_1"]
-        self._state = self.lesson_t_1["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_1"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_2(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_2 = hass.data[DOMAIN]["lessons_t"]["lesson_2"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_2"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 2  (Tomorrow)"
 
     @property
@@ -746,7 +713,7 @@ class Lesson_t_2(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_2
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -761,28 +728,22 @@ class Lesson_t_2(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_2 = get_lesson_info(self, 1)["lesson_2"]
-        self._state = self.lesson_t_2["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_2"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_3(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_3 = hass.data[DOMAIN]["lessons_t"]["lesson_3"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_3"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 3  (Tomorrow)"
 
     @property
@@ -796,7 +757,7 @@ class Lesson_t_3(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_3
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -807,28 +768,22 @@ class Lesson_t_3(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_3 = get_lesson_info(self, 1)["lesson_3"]
-        self._state = self.lesson_t_3["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_3"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_4(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_4 = hass.data[DOMAIN]["lessons_t"]["lesson_4"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_4"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 4 (Tomorrow)"
 
     @property
@@ -842,7 +797,7 @@ class Lesson_t_4(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_4
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -853,28 +808,22 @@ class Lesson_t_4(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_4 = get_lesson_info(self, 1)["lesson_4"]
-        self._state = self.lesson_t_4["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_4"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_5(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_5 = hass.data[DOMAIN]["lessons_t"]["lesson_5"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_5"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 5 (Tomorrow)"
 
     @property
@@ -888,7 +837,7 @@ class Lesson_t_5(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_5
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -899,28 +848,22 @@ class Lesson_t_5(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_5 = get_lesson_info(self, 1)["lesson_5"]
-        self._state = self.lesson_t_5["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_5"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_6(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_6 = hass.data[DOMAIN]["lessons_t"]["lesson_6"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_6"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 6 (Tomorrow)"
 
     @property
@@ -934,7 +877,7 @@ class Lesson_t_6(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_6
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -945,28 +888,22 @@ class Lesson_t_6(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_6 = get_lesson_info(self, 1)["lesson_6"]
-        self._state = self.lesson_t_6["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_6"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_7(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_7 = hass.data[DOMAIN]["lessons_t"]["lesson_7"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_7"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 7 (Tomorrow)"
 
     @property
@@ -980,7 +917,7 @@ class Lesson_t_7(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_7
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -991,28 +928,22 @@ class Lesson_t_7(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_7 = get_lesson_info(self, 1)["lesson_7"]
-        self._state = self.lesson_t_7["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_7"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_8(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_8 = hass.data[DOMAIN]["lessons_t"]["lesson_8"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_8"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 8  (Tomorrow)"
 
     @property
@@ -1026,7 +957,7 @@ class Lesson_t_8(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_8
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -1037,28 +968,22 @@ class Lesson_t_8(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_8 = get_lesson_info(self, 1)["lesson_8"]
-        self._state = self.lesson_t_8["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_8"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_9(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_9 = hass.data[DOMAIN]["lessons_t"]["lesson_9"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_9"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 9 (Tomorrow)"
 
     @property
@@ -1072,7 +997,7 @@ class Lesson_t_9(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_9
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -1083,28 +1008,22 @@ class Lesson_t_9(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_9 = get_lesson_info(self, 1)["lesson_9"]
-        self._state = self.lesson_t_9["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_9"]
+        self._state = self.lesson["lesson"]
 
 
 class Lesson_t_10(Entity):
-    """Representation of a Sensor."""
-
     def __init__(self, hass):
-        """Initialize the sensor."""
         self.student_name = hass.data[DOMAIN]["student_name"]
-
         self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson_t_10 = hass.data[DOMAIN]["lessons_t"]["lesson_10"]
-        self._state = None
+        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_10"]
+        self._state = self.lesson["lesson"]
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return "Lesson 10 (Tomorrow)"
 
     @property
@@ -1118,7 +1037,7 @@ class Lesson_t_10(Entity):
 
     @property
     def device_state_attributes(self):
-        lesson_info = self.lesson_t_10
+        lesson_info = self.lesson
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -1129,9 +1048,8 @@ class Lesson_t_10(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
         return self._state
 
     def update(self):
-        self.lesson_t_10 = get_lesson_info(self, 1)["lesson_10"]
-        self._state = self.lesson_t_10["lesson"]
+        self.lesson = get_lesson_info(self, 1)["lesson_10"]
+        self._state = self.lesson["lesson"]
