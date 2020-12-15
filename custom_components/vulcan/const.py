@@ -13,8 +13,8 @@ CONF_SCAN_INTERVAL = timedelta(minutes=1)
 
 SEND_MESSAGE_SERVICE_SCHEMA = vol.Schema(
     {
-        vol.Required('teacher'): cv.positive_int,
-        vol.Required('title'): cv.string,
-        vol.Optional('content'): cv.string,
+        vol.Required("teacher"): cv.positive_int,
+        vol.Required("title"): cv.string,
+        vol.Optional("content"): cv.string,
     }
 )
