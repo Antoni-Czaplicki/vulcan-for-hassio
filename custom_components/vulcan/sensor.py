@@ -60,8 +60,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([Lesson_t_8(hass)])
     async_add_entities([Lesson_t_9(hass)])
     async_add_entities([Lesson_t_10(hass)])
-    vs = VulcanServices(hass)
-    hass.services.async_register(DOMAIN, "send_message", vs.send_message)
+    #vs = VulcanServices(hass)
+    #hass.services.async_register(DOMAIN, "send_message", vs.send_message)
 
 
 class VulcanServices:
