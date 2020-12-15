@@ -85,7 +85,7 @@ class VulcanOptionsFlowHandler(config_entries.OptionsFlow):
                 CONF_STUDENT_NAME,
             ): vol.In(self._students),
             vol.Optional(
-                CONF_NOTIFY, 
+                CONF_NOTIFY,
                 default=self.config_entry.options.get(CONF_NOTIFY, False),
             ): bool,
             vol.Optional(
