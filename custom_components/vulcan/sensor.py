@@ -745,7 +745,7 @@ class Lesson10(Entity):
 
     @property
     def name(self):
-        return "Lesson 10"
+        return "Lesson" + chr(160) + "10"
 
     @property
     def unique_id(self):
@@ -1256,7 +1256,7 @@ class Lesson_t_10(Entity):
 
     @property
     def name(self):
-        return "Lesson 10 (Tomorrow)"
+        return "Lesson" + chr(160) + "10 (Tomorrow)"
 
     @property
     def unique_id(self):
