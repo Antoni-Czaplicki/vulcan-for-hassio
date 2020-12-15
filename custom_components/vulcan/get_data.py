@@ -175,22 +175,27 @@ def get_id():
     for Student in client.get_students():
         id = Student.id
     return str(id)
-    
+
+
 def get_student_info(student_name):
-    student_info={}
+    student_info = {}
     for student in client.get_students():
         if student.name == student_name:
             id = student.id
             class_ = student.class_.name
-            school = student.school.name 
-        else: 
+            school = student.school.name
+            name = student.name
+        else:
+            name = student.name
             id = student.id
             class_ = student.class_.name
-            school = student.school.name 
-    student_info['id']=id
-    student_info['class']=class_
-    student_info['school']=school
+            school = student.school.name
+    student_info["name"] = name
+    student_info["id"] = id
+    student_info["class"] = class_
+    student_info["school"] = school
     return student_info
+
 
 def get_latest_attendance(self):
     self.latest_attendance = {}
