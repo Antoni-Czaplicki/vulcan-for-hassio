@@ -60,8 +60,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([Lesson_t_8(hass)])
     async_add_entities([Lesson_t_9(hass)])
     async_add_entities([Lesson_t_10(hass)])
-    #vs = VulcanServices(hass)
-    #hass.services.async_register(DOMAIN, "send_message", vs.send_message)
+    vs = VulcanServices(hass)
+    hass.services.async_register(DOMAIN, "send_message", vs.send_message)
 
 
 class VulcanServices:
@@ -88,6 +88,7 @@ class VulcanServices:
 class LatestAttendance(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.latest_attendance = get_latest_attendance(self)
         self.att_notify = hass.data[DOMAIN]["att_notify"]
@@ -123,6 +124,16 @@ class LatestAttendance(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "attendance" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Attendance",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.latest_attendance = get_latest_attendance(self)
         latest_attendance = self.latest_attendance
@@ -149,6 +160,7 @@ class LatestAttendance(Entity):
 class LatestMessage(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.latest_message = get_latest_message(self)
         self.notify = hass.data[DOMAIN]["notify"]
@@ -184,6 +196,16 @@ class LatestMessage(Entity):
         self._state = self.latest_message["title"]
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "message" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Messages",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.latest_message = get_latest_message(self)
         message_latest = self.latest_message
@@ -205,6 +227,7 @@ class LatestMessage(Entity):
 class LatestGrade(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.latest_grade = get_latest_grade(self)
         self._state = self.latest_grade["content"]
@@ -236,6 +259,16 @@ class LatestGrade(Entity):
     @property
     def state(self):
         return self._state
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "grade" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Grades",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
 
     def update(self):
         self.latest_grade = get_latest_grade(self)
@@ -282,10 +315,10 @@ class Lesson1(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, self.student_id)},
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan",  #: ' + self.student_info["name"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
             "entry_type": "service",
         }
 
@@ -297,6 +330,7 @@ class Lesson1(Entity):
 class Lesson2(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_2"]
         self._state = self.lesson["lesson"]
@@ -329,6 +363,16 @@ class Lesson2(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_2"]
         self._state = self.lesson["lesson"]
@@ -337,6 +381,7 @@ class Lesson2(Entity):
 class Lesson3(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_3"]
         self._state = self.lesson["lesson"]
@@ -369,6 +414,16 @@ class Lesson3(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_3"]
         self._state = self.lesson["lesson"]
@@ -377,6 +432,7 @@ class Lesson3(Entity):
 class Lesson4(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_4"]
         self._state = self.lesson["lesson"]
@@ -409,6 +465,16 @@ class Lesson4(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_4"]
         self._state = self.lesson["lesson"]
@@ -417,6 +483,7 @@ class Lesson4(Entity):
 class Lesson5(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_5"]
         self._state = self.lesson["lesson"]
@@ -449,6 +516,16 @@ class Lesson5(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_5"]
         self._state = self.lesson["lesson"]
@@ -457,6 +534,7 @@ class Lesson5(Entity):
 class Lesson6(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_6"]
         self._state = self.lesson["lesson"]
@@ -489,6 +567,16 @@ class Lesson6(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_6"]
         self._state = self.lesson["lesson"]
@@ -497,6 +585,7 @@ class Lesson6(Entity):
 class Lesson7(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_7"]
         self._state = self.lesson["lesson"]
@@ -529,6 +618,16 @@ class Lesson7(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_7"]
         self._state = self.lesson["lesson"]
@@ -537,6 +636,7 @@ class Lesson7(Entity):
 class Lesson8(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_8"]
         self._state = self.lesson["lesson"]
@@ -569,6 +669,16 @@ class Lesson8(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_8"]
         self._state = self.lesson["lesson"]
@@ -577,6 +687,7 @@ class Lesson8(Entity):
 class Lesson9(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_9"]
         self._state = self.lesson["lesson"]
@@ -609,6 +720,16 @@ class Lesson9(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_9"]
         self._state = self.lesson["lesson"]
@@ -617,6 +738,7 @@ class Lesson9(Entity):
 class Lesson10(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons"]["lesson_10"]
         self._state = self.lesson["lesson"]
@@ -649,6 +771,16 @@ class Lesson10(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self)["lesson_10"]
         self._state = self.lesson["lesson"]
@@ -657,6 +789,7 @@ class Lesson10(Entity):
 class Lesson_t_1(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         hass.data[DOMAIN]["lessons_t"] = get_lesson_info(self, 1)
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_1"]
@@ -690,6 +823,16 @@ class Lesson_t_1(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_1"]
         self._state = self.lesson["lesson"]
@@ -698,6 +841,7 @@ class Lesson_t_1(Entity):
 class Lesson_t_2(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_2"]
         self._state = self.lesson["lesson"]
@@ -730,6 +874,16 @@ class Lesson_t_2(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_2"]
         self._state = self.lesson["lesson"]
@@ -738,6 +892,7 @@ class Lesson_t_2(Entity):
 class Lesson_t_3(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_3"]
         self._state = self.lesson["lesson"]
@@ -770,6 +925,16 @@ class Lesson_t_3(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_3"]
         self._state = self.lesson["lesson"]
@@ -778,6 +943,7 @@ class Lesson_t_3(Entity):
 class Lesson_t_4(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_4"]
         self._state = self.lesson["lesson"]
@@ -810,6 +976,16 @@ class Lesson_t_4(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_4"]
         self._state = self.lesson["lesson"]
@@ -818,6 +994,7 @@ class Lesson_t_4(Entity):
 class Lesson_t_5(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_5"]
         self._state = self.lesson["lesson"]
@@ -850,6 +1027,16 @@ class Lesson_t_5(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_5"]
         self._state = self.lesson["lesson"]
@@ -858,6 +1045,7 @@ class Lesson_t_5(Entity):
 class Lesson_t_6(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_6"]
         self._state = self.lesson["lesson"]
@@ -890,6 +1078,16 @@ class Lesson_t_6(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_6"]
         self._state = self.lesson["lesson"]
@@ -898,6 +1096,7 @@ class Lesson_t_6(Entity):
 class Lesson_t_7(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_7"]
         self._state = self.lesson["lesson"]
@@ -930,6 +1129,16 @@ class Lesson_t_7(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_7"]
         self._state = self.lesson["lesson"]
@@ -938,6 +1147,7 @@ class Lesson_t_7(Entity):
 class Lesson_t_8(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_8"]
         self._state = self.lesson["lesson"]
@@ -970,6 +1180,16 @@ class Lesson_t_8(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_8"]
         self._state = self.lesson["lesson"]
@@ -978,6 +1198,7 @@ class Lesson_t_8(Entity):
 class Lesson_t_9(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_9"]
         self._state = self.lesson["lesson"]
@@ -1010,6 +1231,16 @@ class Lesson_t_9(Entity):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_9"]
         self._state = self.lesson["lesson"]
@@ -1018,6 +1249,7 @@ class Lesson_t_9(Entity):
 class Lesson_t_10(Entity):
     def __init__(self, hass):
         self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = hass.data[DOMAIN]["student_id"]
         self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_10"]
         self._state = self.lesson["lesson"]
@@ -1049,6 +1281,16 @@ class Lesson_t_10(Entity):
     @property
     def state(self):
         return self._state
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
 
     def update(self):
         self.lesson = get_lesson_info(self, 1)["lesson_10"]
