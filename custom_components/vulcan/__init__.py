@@ -26,16 +26,6 @@ from .const import (
 )
 
 
-def get_students_list():
-    with open("vulcan.json") as f:
-        certificate = json.load(f)
-    client = Vulcan(certificate)
-    students_list = {}
-    for student in client.get_students():
-        students_list[str(student.id)] = student.name
-    return students_list
-
-
 try:
     if os.stat("vulcan.json").st_size == 0:
         autherror = True
@@ -49,6 +39,13 @@ except FileNotFoundError:
 except StopIteration:
     if os.path.exists("vulcan.json"):
         os.remove("vulcan.json")
+
+
+def get_students_list():
+    students_list = {}
+    for student in client.get_students():
+        students_list[str(student.id)] = student.name
+    return students_list
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -87,6 +84,7 @@ async def async_setup_entry(hass, config_entry):
         ]
     except KeyError:
         hass.data[DOMAIN]["student_name"] = "default"
+
     for student in client.get_students():
         if student.name == hass.data[DOMAIN]["student_name"]:
             client.set_student(student)
