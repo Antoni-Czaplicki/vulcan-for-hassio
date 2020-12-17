@@ -1,6 +1,7 @@
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
+import asyncio
 import datetime
 from datetime import timedelta
 from homeassistant.helpers import config_validation as cv, entity_platform, service
@@ -171,12 +172,6 @@ def get_lesson_info(self, days_to_add=0):
     return dict_ans
 
 
-def get_id():
-    for Student in client.get_students():
-        id = Student.id
-    return str(id)
-
-
 def get_student_info(student_name):
     student_info = {}
     for student in client.get_students():
@@ -256,6 +251,59 @@ def get_latest_grade(self):
         }
 
     return self.latest_grade
+
+
+def get_homework(self):
+    next_homework = {}
+    for homework in client.get_homework(
+        datetime.date.today(), datetime.date.today() + timedelta(7)
+    ):
+        next_homework = {}
+        next_homework["description"] = homework.description
+        next_homework["subject"] = homework.subject.name
+        next_homework["teacher"] = homework.teacher.name
+        next_homework["date"] = homework.date.strftime("%d.%m.%Y")
+
+    if next_homework == {}:
+        next_homework = {
+            "description": "Brak zadań domowych",
+            "subject": "w najbliższym tygodniu",
+            "teacher": "-",
+            "date": "-",
+        }
+
+    return next_homework
+
+
+def get_exam(self):
+    next_exam = {}
+    for exam in client.get_exams(
+        datetime.date.today(), datetime.date.today() + timedelta(7)
+    ):
+        next_exam = {}
+        next_exam["description"] = exam.description
+        next_exam["subject"] = exam.subject.name
+        next_exam["type"] = exam.type.name
+        next_exam["teacher"] = exam.teacher.name
+        next_exam["date"] = exam.date.strftime("%d.%m.%Y")
+
+    if next_exam["type"] == "SHORT_TEST":
+        next_exam["type"] = "Kartkówka"
+    elif next_exam["type"] == "CLASS_TEST":
+        next_exam["type"] = "Praca Klasowa"
+    elif next_exam["type"] == "EXAM":
+        next_exam["type"] = "Sprawdzian"
+
+    if next_exam == {}:
+        next_exam = {
+            "description": "Brak sprawdzianów",
+            "subject": "w najbliższym tygodniu",
+            "type": "-",
+            "teacher": "-",
+            "date": "-",
+        }
+
+    return next_exam
 
 
 def get_latest_message(self):
