@@ -1,6 +1,7 @@
 from homeassistant.helpers.entity import Entity
 import json
 from vulcan import Vulcan
+import asyncio
 from homeassistant.core import ServiceCall
 from homeassistant.components import persistent_notification
 from datetime import datetime
@@ -8,11 +9,12 @@ from homeassistant import config_entries
 from datetime import timedelta
 from .get_data import (
     get_lesson_info,
-    get_id,
     get_latest_grade,
     get_latest_message,
     get_latest_attendance,
     get_student_info,
+    get_homework,
+    get_exam,
 )
 from homeassistant.helpers import config_validation as cv, entity_platform, service
 from .const import (
@@ -23,20 +25,11 @@ from .const import (
 from .__init__ import client
 from . import DOMAIN
 
-try:
-    vulcan_error = False
-    with open("vulcan.json") as f:
-        certificate = json.load(f)
-    client = Vulcan(certificate)
-except:
-    vulcan_error = True
-
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    hass.data[DOMAIN]["student_id"] = get_id()
     hass.data[DOMAIN]["student_info"] = get_student_info(
         hass.data[DOMAIN]["student_name"]
     )
+    hass.data[DOMAIN]["student_id"] = str(hass.data[DOMAIN]["student_info"]["id"])
     async_add_entities([Lesson1(hass)])
     async_add_entities([Lesson2(hass)])
     async_add_entities([Lesson3(hass)])
@@ -50,6 +43,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([LatestGrade(hass)])
     async_add_entities([LatestMessage(hass)])
     async_add_entities([LatestAttendance(hass)])
+    async_add_entities([NextHomework(hass)])
+    async_add_entities([NextExam(hass)])
     async_add_entities([Lesson_t_1(hass)])
     async_add_entities([Lesson_t_2(hass)])
     async_add_entities([Lesson_t_3(hass)])
@@ -60,29 +55,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([Lesson_t_8(hass)])
     async_add_entities([Lesson_t_9(hass)])
     async_add_entities([Lesson_t_10(hass)])
-    #vs = VulcanServices(hass)
-    #hass.services.async_register(DOMAIN, "send_message", vs.send_message)
-
-
-class VulcanServices:
-    def __init__(self, hass):
-        self._hass = hass
-        x = 0
-
-    def send_message(self, call):
-        message_data = call.data
-        SEND_MESSAGE_SERVICE_SCHEMA
-        persistent_notification.async_create(
-            self._hass,
-            "Id: "
-            + str(call.data.get("teacher"))
-            + ", Title: "
-            + call.data.get("title")
-            + ", Content: "
-            + call.data.get("content"),
-            "Vulcan: testing",
-        )
-        return
 
 
 class LatestAttendance(Entity):
@@ -93,7 +65,7 @@ class LatestAttendance(Entity):
         self.latest_attendance = get_latest_attendance(self)
         self.att_notify = hass.data[DOMAIN]["att_notify"]
         self.old_att = self.latest_attendance["datetime"]
-        self._state = None
+        self._state = self.latest_attendance["content"]
 
     @property
     def name(self):
@@ -127,7 +99,7 @@ class LatestAttendance(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "attendance" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "attendance" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Attendance",  #: ' + self.student_info["name"],
@@ -199,7 +171,7 @@ class LatestMessage(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "message" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "message" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Messages",  #: ' + self.student_info["name"],
@@ -263,7 +235,7 @@ class LatestGrade(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "grade" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "grade" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Grades",  #: ' + self.student_info["name"],
@@ -273,6 +245,105 @@ class LatestGrade(Entity):
     def update(self):
         self.latest_grade = get_latest_grade(self)
         self._state = self.latest_grade["content"]
+
+
+class NextHomework(Entity):
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
+        self.student_id = hass.data[DOMAIN]["student_id"]
+        self.next_homework = get_homework(self)
+        self._state = self.next_homework["description"]
+
+    @property
+    def name(self):
+        return "Next Homework"
+
+    @property
+    def icon(self):
+        return "mdi:pen"
+
+    @property
+    def unique_id(self):
+        id = self.student_id
+        return "homework_next_" + id
+
+    @property
+    def device_state_attributes(self):
+        atr = {
+            "subject": self.next_homework["subject"],
+            "teacher": self.next_homework["teacher"],
+            "date": self.next_homework["date"],
+        }
+        return atr
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "homework" + self.student_id)},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Homeworks",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
+    def update(self):
+        self.next_homework = get_homework(self)
+        self._state = self.next_homework["description"]
+
+
+class NextExam(Entity):
+    def __init__(self, hass):
+        self.student_name = hass.data[DOMAIN]["student_name"]
+        self.student_info = hass.data[DOMAIN]["student_info"]
+        self.student_id = hass.data[DOMAIN]["student_id"]
+        self.next_exam = get_exam(self)
+        self._state = self.next_exam["description"]
+
+    @property
+    def name(self):
+        return "Next Exam"
+
+    @property
+    def icon(self):
+        return "mdi:format-list-checks"
+
+    @property
+    def unique_id(self):
+        id = self.student_id
+        return "exam_next_" + id
+
+    @property
+    def device_state_attributes(self):
+        atr = {
+            "subject": self.next_exam["subject"],
+            "type": self.next_exam["type"],
+            "teacher": self.next_exam["teacher"],
+            "date": self.next_exam["date"],
+        }
+        return atr
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "exam" + self.student_id)},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": "Vulcan Exam",  #: ' + self.student_info["name"],
+            "entry_type": "service",
+        }
+
+    def update(self):
+        self.next_exam = get_exam(self)
+        self._state = self.next_exam["description"]
 
 
 class Lesson1(Entity):
@@ -315,7 +386,7 @@ class Lesson1(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -366,7 +437,7 @@ class Lesson2(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -417,7 +488,7 @@ class Lesson3(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -468,7 +539,7 @@ class Lesson4(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -519,7 +590,7 @@ class Lesson5(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -570,7 +641,7 @@ class Lesson6(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -621,7 +692,7 @@ class Lesson7(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -672,7 +743,7 @@ class Lesson8(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -723,7 +794,7 @@ class Lesson9(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -774,7 +845,7 @@ class Lesson10(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
@@ -826,7 +897,7 @@ class Lesson_t_1(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -877,7 +948,7 @@ class Lesson_t_2(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -928,7 +999,7 @@ class Lesson_t_3(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -979,7 +1050,7 @@ class Lesson_t_4(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -1030,7 +1101,7 @@ class Lesson_t_5(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -1081,7 +1152,7 @@ class Lesson_t_6(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -1132,7 +1203,7 @@ class Lesson_t_7(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -1183,7 +1254,7 @@ class Lesson_t_8(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -1234,7 +1305,7 @@ class Lesson_t_9(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
@@ -1285,7 +1356,7 @@ class Lesson_t_10(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + str(self.student_id))},
+            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
             "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
