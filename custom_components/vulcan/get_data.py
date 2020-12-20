@@ -287,13 +287,6 @@ def get_exam(self):
         next_exam["teacher"] = exam.teacher.name
         next_exam["date"] = exam.date.strftime("%d.%m.%Y")
 
-    if next_exam["type"] == "SHORT_TEST":
-        next_exam["type"] = "Kartkówka"
-    elif next_exam["type"] == "CLASS_TEST":
-        next_exam["type"] = "Praca Klasowa"
-    elif next_exam["type"] == "EXAM":
-        next_exam["type"] = "Sprawdzian"
-
     if next_exam == {}:
         next_exam = {
             "description": "Brak sprawdzianów",
@@ -302,6 +295,13 @@ def get_exam(self):
             "teacher": "-",
             "date": "-",
         }
+
+    if next_exam["type"] == "SHORT_TEST":
+        next_exam["type"] = "Kartkówka"
+    elif next_exam["type"] == "CLASS_TEST":
+        next_exam["type"] = "Praca Klasowa"
+    elif next_exam["type"] == "EXAM":
+        next_exam["type"] = "Sprawdzian"
 
     return next_exam
 
