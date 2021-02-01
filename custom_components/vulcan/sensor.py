@@ -17,7 +17,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from . import DOMAIN, VulcanEntity
-from .const import CONF_NOTIFY, CONF_STUDENT_NAME, SEND_MESSAGE_SERVICE_SCHEMA
+from .const import CONF_NOTIFY, CONF_STUDENT_NAME, SEND_MESSAGE_SERVICE_SCHEMA, PARALLEL_UPDATES
 from .get_data import (
     get_next_exam,
     get_next_homework,
