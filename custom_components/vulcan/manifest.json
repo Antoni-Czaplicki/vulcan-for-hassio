@@ -10,6 +10,6 @@
     "@Antoni-Czaplicki"
   ],
   "requirements": [
-    "vulcan-api==1.3"
+    "vulcan-api==1.3.1"
   ]
 }
