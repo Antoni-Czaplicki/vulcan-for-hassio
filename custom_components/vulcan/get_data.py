@@ -10,11 +10,13 @@ from homeassistant.helpers.entity import Entity
 
 from . import DOMAIN
 from .const import CONF_STUDENT_NAME
+
 with open(".vulcan/keystore.json") as f:
     keystore = Keystore.load(f)
 with open(".vulcan/account.json") as f:
     account = Account.load(f)
 client = VulcanHebe(keystore, account)
+
 
 async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"):
     await client.select_student()
@@ -22,10 +24,10 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
         if student.pupil.id == student_id:
             client.student = student
             break
-    dict_ans={}
-    list_ans=[]
+    dict_ans = {}
+    list_ans = []
     async for Lesson in await client.data.get_lessons(
-        date_from=date_from, date_to = date_to
+        date_from=date_from, date_to=date_to
     ):
         temp_dict = {}
         temp_dict["number"] = Lesson.time.position
@@ -55,13 +57,13 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
         if temp_dict["visible"] == True:
             if type_ == "dict":
                 dict_ans["lesson_" + lesson] = temp_dict
-            elif type_ == "list": 
+            elif type_ == "list":
                 list_ans.append(temp_dict)
 
     for num in range(10):
-        if not "lesson_" + str(num+1) in dict_ans:
-            dict_ans["lesson_" + str(num+1)] = {
-                "number": num+1,
+        if not "lesson_" + str(num + 1) in dict_ans:
+            dict_ans["lesson_" + str(num + 1)] = {
+                "number": num + 1,
                 "lesson": "-",
                 "room": "-",
                 "group": "-",
@@ -71,7 +73,7 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
             }
     if type_ == "dict":
         return dict_ans
-    elif type_ == "list": 
+    elif type_ == "list":
         return list_ans
 
 
@@ -170,12 +172,18 @@ async def get_next_homework(student_id):
             break
     next_homework = {}
     async for homework in await client.data.get_homework():
-        if homework.deadline.date >= datetime.date.today() and homework.deadline.date <= datetime.date.today() + timedelta(7):
-            next_homework = {}
-            next_homework["description"] = homework.content
-            next_homework["subject"] = homework.subject.name
-            next_homework["teacher"] = homework.creator.name
-            next_homework["date"] = homework.deadline.date.strftime("%d.%m.%Y")
+        for i in range(7):
+            if (
+                homework.deadline.date >= datetime.date.today()
+                and homework.deadline.date <= datetime.date.today() + timedelta(i)
+            ):
+                next_homework = {}
+                next_homework["description"] = homework.content
+                next_homework["subject"] = homework.subject.name
+                next_homework["teacher"] = homework.creator.name
+                next_homework["date"] = homework.deadline.date.strftime("%d.%m.%Y")
+                if exam.content != None:
+                    break
 
     if next_homework == {}:
         next_homework = {
@@ -196,13 +204,21 @@ async def get_next_exam(student_id):
             break
     next_exam = {}
     async for exam in await client.data.get_exams():
-        if exam.deadline.date >= datetime.date.today() and exam.deadline.date <= datetime.date.today() + timedelta(7):
-            next_exam = {}
-            next_exam["description"] = exam.topic
-            next_exam["subject"] = exam.subject.name
-            next_exam["type"] = exam.type
-            next_exam["teacher"] = exam.creator.name
-            next_exam["date"] = exam.deadline.date.strftime("%d.%m.%Y")
+        for i in range(7):
+            if (
+                exam.deadline.date >= datetime.date.today()
+                and exam.deadline.date <= datetime.date.today() + timedelta(i)
+            ):
+                next_exam = {}
+                next_exam["description"] = exam.topic
+                if exam.topic == "":
+                    next_exam["description"] = exam.type + " " + exam.subject.name
+                next_exam["subject"] = exam.subject.name
+                next_exam["type"] = exam.type
+                next_exam["teacher"] = exam.creator.name
+                next_exam["date"] = exam.deadline.date.strftime("%d.%m.%Y")
+                if exam.type != None:
+                    break
 
     if next_exam == {}:
         next_exam = {
@@ -212,13 +228,6 @@ async def get_next_exam(student_id):
             "teacher": "-",
             "date": "-",
         }
-
-    if next_exam["type"] == "SHORT_TEST":
-        next_exam["type"] = "Kartkówka"
-    elif next_exam["type"] == "CLASS_TEST":
-        next_exam["type"] = "Praca Klasowa"
-    elif next_exam["type"] == "EXAM":
-        next_exam["type"] = "Sprawdzian"
 
     return next_exam
 

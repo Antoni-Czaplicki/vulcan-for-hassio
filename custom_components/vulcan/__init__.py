@@ -19,8 +19,6 @@ async def async_setup(hass, config) -> bool:
 
 
 async def async_setup_entry(hass, config_entry):
-    hass.data[DOMAIN]["notify"] = config_entry.options.get(CONF_NOTIFY)
-    hass.data[DOMAIN]["att_notify"] = config_entry.options.get(CONF_ATTENDANCE_NOTIFY)
     autherror = False
     try:
         with open(".vulcan/keystore.json") as f:
