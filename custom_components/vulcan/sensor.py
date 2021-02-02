@@ -1,84 +1,169 @@
-from homeassistant.helpers.entity import Entity
-import json
-from vulcan import Vulcan
-import asyncio
-from homeassistant.core import ServiceCall
-from homeassistant.components import persistent_notification
-from datetime import datetime
-from homeassistant import config_entries
+import datetime
 from datetime import timedelta
+
+from vulcan import Vulcan
+
+from homeassistant.components import persistent_notification
+
+from . import DOMAIN, VulcanEntity
+from .const import (
+    CONF_ATTENDANCE_NOTIFY,
+    CONF_NOTIFY,
+    CONF_STUDENT_NAME,
+    PARALLEL_UPDATES,
+)
 from .get_data import (
-    get_lesson_info,
+    get_latest_attendance,
     get_latest_grade,
     get_latest_message,
-    get_latest_attendance,
+    get_lesson_info,
+    get_next_exam,
+    get_next_homework,
     get_student_info,
-    get_homework,
-    get_exam,
 )
-from homeassistant.helpers import config_validation as cv, entity_platform, service
-from .const import (
-    CONF_STUDENT_NAME,
-    CONF_NOTIFY,
-    SEND_MESSAGE_SERVICE_SCHEMA,
-)
-from .__init__ import client
-from . import DOMAIN
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    hass.data[DOMAIN]["student_info"] = get_student_info(
-        hass.data[DOMAIN]["student_name"]
+    hass.data[DOMAIN][CONF_NOTIFY] = config_entry.options.get(CONF_NOTIFY)
+    hass.data[DOMAIN][CONF_ATTENDANCE_NOTIFY] = config_entry.options.get(
+        CONF_ATTENDANCE_NOTIFY
     )
-    hass.data[DOMAIN]["student_id"] = str(hass.data[DOMAIN]["student_info"]["id"])
-    async_add_entities([Lesson1(hass)])
-    async_add_entities([Lesson2(hass)])
-    async_add_entities([Lesson3(hass)])
-    async_add_entities([Lesson4(hass)])
-    async_add_entities([Lesson5(hass)])
-    async_add_entities([Lesson6(hass)])
-    async_add_entities([Lesson7(hass)])
-    async_add_entities([Lesson8(hass)])
-    async_add_entities([Lesson9(hass)])
-    async_add_entities([Lesson10(hass)])
+    hass.data[DOMAIN]["student_info"] = await get_student_info(
+        config_entry.data.get("student_id")
+    )
+    hass.data[DOMAIN]["students_number"] = config_entry.data.get("students_number")
+    hass.data[DOMAIN]["lessons"] = await get_lesson_info(
+        student_id=config_entry.data.get("student_id")
+    )
+    hass.data[DOMAIN]["lessons_t"] = await get_lesson_info(
+        student_id=config_entry.data.get("student_id"),
+        date_from=datetime.date.today() + timedelta(days=1),
+    )
+    hass.data[DOMAIN]["grade"] = await get_latest_grade(
+        config_entry.data.get("student_id")
+    )
+    hass.data[DOMAIN]["attendance"] = await get_latest_attendance(
+        config_entry.data.get("student_id")
+    )
+    hass.data[DOMAIN]["homework"] = await get_next_homework(
+        config_entry.data.get("student_id")
+    )
+    hass.data[DOMAIN]["exam"] = await get_next_exam(config_entry.data.get("student_id"))
+    async_add_entities([VulcanLessonEntity(hass, 1)])
+    async_add_entities([VulcanLessonEntity(hass, 2)])
+    async_add_entities([VulcanLessonEntity(hass, 3)])
+    async_add_entities([VulcanLessonEntity(hass, 4)])
+    async_add_entities([VulcanLessonEntity(hass, 5)])
+    async_add_entities([VulcanLessonEntity(hass, 6)])
+    async_add_entities([VulcanLessonEntity(hass, 7)])
+    async_add_entities([VulcanLessonEntity(hass, 8)])
+    async_add_entities([VulcanLessonEntity(hass, 9)])
+    async_add_entities([VulcanLessonEntity(hass, 10)])
     async_add_entities([LatestGrade(hass)])
-    async_add_entities([LatestMessage(hass)])
+    # async_add_entities([LatestMessage(hass)])
     async_add_entities([LatestAttendance(hass)])
     async_add_entities([NextHomework(hass)])
     async_add_entities([NextExam(hass)])
-    async_add_entities([Lesson_t_1(hass)])
-    async_add_entities([Lesson_t_2(hass)])
-    async_add_entities([Lesson_t_3(hass)])
-    async_add_entities([Lesson_t_4(hass)])
-    async_add_entities([Lesson_t_5(hass)])
-    async_add_entities([Lesson_t_6(hass)])
-    async_add_entities([Lesson_t_7(hass)])
-    async_add_entities([Lesson_t_8(hass)])
-    async_add_entities([Lesson_t_9(hass)])
-    async_add_entities([Lesson_t_10(hass)])
+    async_add_entities([VulcanLessonEntity(hass, 1, True)])
+    async_add_entities([VulcanLessonEntity(hass, 2, True)])
+    async_add_entities([VulcanLessonEntity(hass, 3, True)])
+    async_add_entities([VulcanLessonEntity(hass, 4, True)])
+    async_add_entities([VulcanLessonEntity(hass, 5, True)])
+    async_add_entities([VulcanLessonEntity(hass, 6, True)])
+    async_add_entities([VulcanLessonEntity(hass, 7, True)])
+    async_add_entities([VulcanLessonEntity(hass, 8, True)])
+    async_add_entities([VulcanLessonEntity(hass, 9, True)])
+    async_add_entities([VulcanLessonEntity(hass, 10, True)])
 
 
-class LatestAttendance(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
+class VulcanLessonEntity(VulcanEntity):
+    def __init__(self, hass, number, _tomorrow=False):
         self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.latest_attendance = get_latest_attendance(self)
-        self.att_notify = hass.data[DOMAIN]["att_notify"]
+        self.student_name = self.student_info["full_name"]
+        self.student_id = str(self.student_info["id"])
+
+        if hass.data[DOMAIN]["students_number"] == 1:
+            name = ""
+            self.device_student_name = ""
+        else:
+            name = " - " + self.student_info["full_name"]
+            self.device_student_name = self.student_info["full_name"] + ": "
+
+        self.number = str(number)
+        if _tomorrow == True:
+            tomorrow = "_t"
+            name_tomorrow = " (Tomorrow)"
+            self.tomorrow_device_id = "tomorrow_"
+            self.device_name_tomorrow = "Tomorrow "
+            self.num_tomorrow = date_from = datetime.date.today() + timedelta(days=1)
+        else:
+            tomorrow = ""
+            name_tomorrow = " "
+            self.tomorrow_device_id = ""
+            self.device_name_tomorrow = ""
+            self.num_tomorrow = date_from = datetime.date.today()
+
+        if number == 10:
+            space = chr(160)
+        else:
+            space = " "
+
+        self.lesson = hass.data[DOMAIN]["lessons" + tomorrow]["lesson_" + self.number]
+        self._state = self.lesson["lesson"]
+
+        self._name = "Lesson" + space + self.number + name_tomorrow + name
+        self._unique_id = "lesson_" + tomorrow + self.number + "_" + self.student_id
+        self._icon = "mdi:timetable"
+
+    @property
+    def device_state_attributes(self):
+        lesson_info = self.lesson
+        atr = {
+            "room": lesson_info["room"],
+            "teacher": lesson_info["teacher"],
+            "time": lesson_info["time"],
+            "changes": lesson_info["changes"],
+        }
+        return atr
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {
+                (DOMAIN, self.tomorrow_device_id + "timetable_" + self.student_id)
+            },
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": self.device_student_name + self.device_name_tomorrow + "Timetable",
+            "entry_type": "service",
+        }
+
+    async def async_update(self):
+        self.lesson_data = await get_lesson_info(
+            student_id=self.student_id, date_from=self.num_tomorrow
+        )
+        self.lesson = self.lesson_data["lesson_" + self.number]
+        self._state = self.lesson["lesson"]
+
+
+class LatestAttendance(VulcanEntity):
+    def __init__(self, hass):
+        self.student_info = hass.data[DOMAIN]["student_info"]
+        self.student_id = str(self.student_info["id"])
+        self.latest_attendance = hass.data[DOMAIN]["attendance"]
+        self.att_notify = hass.data[DOMAIN][CONF_ATTENDANCE_NOTIFY]
         self.old_att = self.latest_attendance["datetime"]
         self._state = self.latest_attendance["content"]
 
-    @property
-    def name(self):
-        return "Latest Attendance"
-
-    @property
-    def icon(self):
-        return "mdi:account-check-outline"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "attendance_latest_" + id
+        if hass.data[DOMAIN]["students_number"] == 1:
+            name = ""
+            self.device_student_name = ""
+        else:
+            name = " - " + self.student_info["full_name"]
+            self.device_student_name = self.student_info["full_name"] + ": "
+        self._name = "Latest Attendance" + name
+        self._unique_id = "attendance_latest_" + self.student_id
+        self._icon = "mdi:account-check-outline"
 
     @property
     def device_state_attributes(self):
@@ -93,21 +178,17 @@ class LatestAttendance(Entity):
         return atr
 
     @property
-    def state(self):
-        return self._state
-
-    @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "attendance" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Attendance",  #: ' + self.student_info["name"],
+            "name": self.device_student_name + "Attendance",
             "entry_type": "service",
         }
 
-    def update(self):
-        self.latest_attendance = get_latest_attendance(self)
+    async def async_update(self):
+        self.latest_attendance = await get_latest_attendance(self.student_id)
         latest_attendance = self.latest_attendance
         if self.att_notify == True:
             if (
@@ -129,28 +210,25 @@ class LatestAttendance(Entity):
         self._state = latest_attendance["content"]
 
 
-class LatestMessage(Entity):
+class LatestMessage(VulcanEntity):
     def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
         self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
+        self.student_name = self.student_info["full_name"]
+        self.student_id = str(self.student_info["id"])
         self.latest_message = get_latest_message(self)
-        self.notify = hass.data[DOMAIN]["notify"]
+        self.notify = hass.data[DOMAIN][CONF_NOTIFY]
         self.old_msg = self.latest_message["content"]
-        self._state = None
+        self._state = self.latest_message["title"]
 
-    @property
-    def name(self):
-        return "Latest Message"
-
-    @property
-    def icon(self):
-        return "mdi:message-arrow-left-outline"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "message_latest_" + id
+        if hass.data[DOMAIN]["students_number"] == 1:
+            name = ""
+            self.device_student_name = ""
+        else:
+            name = " - " + self.student_info["full_name"]
+            self.device_student_name = self.student_info["full_name"] + ": "
+        self._name = "Latest Message" + name
+        self._unique_id = "message_latest_" + self.student_id
+        self._icon = "mdi:message-arrow-left-outline"
 
     @property
     def device_state_attributes(self):
@@ -164,17 +242,12 @@ class LatestMessage(Entity):
         return atr
 
     @property
-    def state(self):
-        self._state = self.latest_message["title"]
-        return self._state
-
-    @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "message" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Messages",  #: ' + self.student_info["name"],
+            "name": self.device_student_name + "Messages",
             "entry_type": "service",
         }
 
@@ -196,26 +269,23 @@ class LatestMessage(Entity):
         self._state = message_latest["title"]
 
 
-class LatestGrade(Entity):
+class LatestGrade(VulcanEntity):
     def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
         self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.latest_grade = get_latest_grade(self)
+        self.latest_grade = hass.data[DOMAIN]["grade"]
         self._state = self.latest_grade["content"]
+        self.student_id = str(self.student_info["id"])
 
-    @property
-    def name(self):
-        return "Latest Grade"
+        if hass.data[DOMAIN]["students_number"] == 1:
+            name = ""
+            self.device_student_name = ""
+        else:
+            name = " - " + self.student_info["full_name"]
+            self.device_student_name = self.student_info["full_name"] + ": "
 
-    @property
-    def icon(self):
-        return "mdi:school-outline"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "grade_latest_" + id
+        self._name = "Latest grade" + name
+        self._unique_id = "grade_latest_" + self.student_id
+        self._icon = "mdi:school-outline"
 
     @property
     def device_state_attributes(self):
@@ -229,44 +299,38 @@ class LatestGrade(Entity):
         return atr
 
     @property
-    def state(self):
-        return self._state
-
-    @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "grade" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Grades",  #: ' + self.student_info["name"],
+            "name": self.device_student_name + "Grades",
             "entry_type": "service",
         }
 
-    def update(self):
-        self.latest_grade = get_latest_grade(self)
+    async def async_update(self):
+        self.latest_grade = await get_latest_grade(self.student_id)
         self._state = self.latest_grade["content"]
 
 
-class NextHomework(Entity):
+class NextHomework(VulcanEntity):
     def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
         self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.next_homework = get_homework(self)
+        self.student_name = self.student_info["full_name"]
+        self.student_id = str(self.student_info["id"])
+        self.next_homework = hass.data[DOMAIN]["homework"]
         self._state = self.next_homework["description"]
 
-    @property
-    def name(self):
-        return "Next Homework"
+        if hass.data[DOMAIN]["students_number"] == 1:
+            name = ""
+            self.device_student_name = ""
+        else:
+            name = " - " + self.student_info["full_name"]
+            self.device_student_name = self.student_info["full_name"] + ": "
 
-    @property
-    def icon(self):
-        return "mdi:pen"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "homework_next_" + id
+        self._name = "Next Homework" + name
+        self._unique_id = "homework_next_" + self.student_id
+        self._icon = "mdi:pen"
 
     @property
     def device_state_attributes(self):
@@ -278,44 +342,38 @@ class NextHomework(Entity):
         return atr
 
     @property
-    def state(self):
-        return self._state
-
-    @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "homework" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Homeworks",  #: ' + self.student_info["name"],
+            "name": self.device_student_name + "Homeworks",
             "entry_type": "service",
         }
 
-    def update(self):
-        self.next_homework = get_homework(self)
+    async def async_update(self):
+        self.next_homework = await get_next_homework(self.student_id)
         self._state = self.next_homework["description"]
 
 
-class NextExam(Entity):
+class NextExam(VulcanEntity):
     def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
         self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.next_exam = get_exam(self)
+        self.student_name = self.student_info["full_name"]
+        self.student_id = str(self.student_info["id"])
+        self.next_exam = hass.data[DOMAIN]["exam"]
         self._state = self.next_exam["description"]
 
-    @property
-    def name(self):
-        return "Next Exam"
+        if hass.data[DOMAIN]["students_number"] == 1:
+            name = ""
+            self.device_student_name = ""
+        else:
+            name = " - " + self.student_info["full_name"]
+            self.device_student_name = self.student_info["full_name"] + ": "
 
-    @property
-    def icon(self):
-        return "mdi:format-list-checks"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "exam_next_" + id
+        self._name = "Next Exam" + name
+        self._unique_id = "exam_next_" + self.student_id
+        self._icon = "mdi:format-list-checks"
 
     @property
     def device_state_attributes(self):
@@ -328,1041 +386,15 @@ class NextExam(Entity):
         return atr
 
     @property
-    def state(self):
-        return self._state
-
-    @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "exam" + self.student_id)},
             "manufacturer": "Uonet +",
             "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Exam",  #: ' + self.student_info["name"],
+            "name": self.device_student_name + "Exam",
             "entry_type": "service",
         }
 
-    def update(self):
-        self.next_exam = get_exam(self)
+    async def async_update(self):
+        self.next_exam = await get_next_exam(self.student_id)
         self._state = self.next_exam["description"]
-
-
-class Lesson1(Entity):
-    def __init__(self, hass):
-        hass.data[DOMAIN]["lessons"] = get_lesson_info(self)
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_1"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 1"
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_1_" + id
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_1"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson2(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_2"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 2"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_2_" + id
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_2"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson3(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_3"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 3"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_3_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_3"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson4(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_4"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 4"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_4_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_4"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson5(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_5"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 5"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_5_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_5"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson6(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_6"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 6"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_6_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_6"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson7(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_7"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 7"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_7_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_7"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson8(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_8"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 8"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_8_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_8"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson9(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_9"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 9"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_9_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_9"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson10(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons"]["lesson_10"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson" + chr(160) + "10"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_10_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self)["lesson_10"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_1(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        hass.data[DOMAIN]["lessons_t"] = get_lesson_info(self, 1)
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_1"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 1 (Tomorrow)"
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_1_" + id
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_1"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_2(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_2"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 2  (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_2_" + id
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_2"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_3(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_3"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 3  (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_3_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_3"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_4(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_4"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 4 (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_4_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_4"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_5(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_5"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 5 (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_5_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_5"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_6(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_6"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 6 (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_6_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_6"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_7(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_7"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 7 (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_7_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_7"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_8(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_8"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 8  (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_8_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_8"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_9(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_9"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson 9 (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_9_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_9"]
-        self._state = self.lesson["lesson"]
-
-
-class Lesson_t_10(Entity):
-    def __init__(self, hass):
-        self.student_name = hass.data[DOMAIN]["student_name"]
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.student_id = hass.data[DOMAIN]["student_id"]
-        self.lesson = hass.data[DOMAIN]["lessons_t"]["lesson_10"]
-        self._state = self.lesson["lesson"]
-
-    @property
-    def name(self):
-        return "Lesson" + chr(160) + "10 (Tomorrow)"
-
-    @property
-    def unique_id(self):
-        id = self.student_id
-        return "lesson_t_10_" + id
-
-    @property
-    def icon(self):
-        return "mdi:timetable"
-
-    @property
-    def device_state_attributes(self):
-        lesson_info = self.lesson
-        atr = {
-            "room": lesson_info["room"],
-            "teacher": lesson_info["teacher"],
-            "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
-        }
-        return atr
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "tomorrow_timetable_" + self.student_id)},
-            "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": "Vulcan Tomorrow Timetable",  #: ' + self.student_info["name"],
-            "entry_type": "service",
-        }
-
-    def update(self):
-        self.lesson = get_lesson_info(self, 1)["lesson_10"]
-        self._state = self.lesson["lesson"]

@@ -1,34 +1,56 @@
 {
-  "config": {
-    "abort": {
-      "single_instance_allowed": "Already configured. Only a single configuration possible."
-    },
-    "error":{
-      "text": "{error_text}"
-    },
-    "step": {
-      "user": {
-        "description": "Login to your Vulcan Account using mobile app registration page.",
-        "data": {
-          "token": "Token",
-          "symbol": "Symbol",
-          "pin": "Pin"
+   "config":{
+      "abort":{
+         "single_instance_allowed":"Already configured. Only a single configuration possible.",
+         "all_student_already_configured":"All students have already been added.",
+		 "reauth_successful":"Reauth successful"
+      },
+      "error":{
+         "text":"{error_text}"
+      },
+      "step":{
+         "user":{
+            "description":"Login to your Vulcan Account using mobile app registration page.",
+            "data":{
+               "token":"Token",
+               "symbol":"Symbol",
+               "pin":"Pin"
+            }
+         },
+         "reauth":{
+            "description":"Login to your Vulcan Account using mobile app registration page.",
+            "data":{
+               "token":"Token",
+               "symbol":"Symbol",
+               "pin":"Pin"
+            }
+         },
+         "select_student":{
+            "description":"Select student, you can add more students by adding integration again.",
+            "data":{
+               "student_name":"Select student"
+            }
+         },
+         "add_student":{
+            "description":"Add another student.",
+            "data":{
+               "use_saved_credentials":"Use saved credentials"
             }
          }
-       }
-     },
-  "options": {
-    "error": {
-      "error": "Error occurred"
-    },
-    "step": {
-      "init": {
-        "data": {
-          "notify": "Show notifications when new message received",
-          "attendance_notify": "Show notifications about the latest attendance entries",
-          "student_name": "Select student"
+      }
+   },
+   "options":{
+      "error":{
+         "error":"Error occurred"
+      },
+      "step":{
+         "init":{
+            "data":{
+               "notify":"Show notifications when new message received",
+               "attendance_notify":"Show notifications about the latest attendance entries",
+               "student_name":"Select student"
             }
-        }
-     }
+         }
+      }
    }
 }

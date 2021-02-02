@@ -1,34 +1,56 @@
 {
-  "config": {
-    "abort": {
-      "single_instance_allowed": "Dozwolona jest tylko jedna konfiguracja Uonet+ Vulcan."
-    },
-    "error":{
-      "text": "Wprowadzono nieprawidłowe dane"
-    },
-    "step": {
-      "user": {
-        "description": "Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
-        "data": {
-          "token": "Token",
-          "symbol": "Symbol",
-          "pin": "Pin"
+   "config":{
+      "abort":{
+         "student_already_configured":"Ten uczeń został już dodany.",
+         "all_student_already_configured":"Wszyscy uczniowie zostali już dodani.",
+		 "reauth_successful":"Zalogowano pomyślnie"
+      },
+      "error":{
+         "text":"Wprowadzono nieprawidłowe dane"
+      },
+      "step":{
+         "user":{
+            "description":"Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
+            "data":{
+               "token":"Token",
+               "symbol":"Symbol",
+               "pin":"Pin"
             }
-        }
-     }
+         },
+         "reauth":{
+            "description":"Zaloguj się ponownie do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
+            "data":{
+               "token":"Token",
+               "symbol":"Symbol",
+               "pin":"Pin"
+            }
+         },
+         "select_student":{
+            "description":"Wybierz ucznia, możesz później dodać kolejnych dodając integrację jeszcze raz.",
+            "data":{
+               "student_name":"Wybierz ucznia"
+            }
+         },
+         "add_student":{
+            "description":"Dodaj kolejnego ucznia.",
+            "data":{
+               "use_saved_credentials":"Użyj zapisanych danych logowania"
+            }
+         }
+      }
    },
-  "options": {
-    "error": {
-      "error": "Wystąpił Błąd"
-    },
-    "step": {
-      "init": {
-        "data": {
-          "notify": "Pokazuj powiadomienia o najnowszych wiadomościach",
-          "attendance_notify": "Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
-          "student_name": "Wybierz ucznia"
+   "options":{
+      "error":{
+         "error":"Wystąpił Błąd"
+      },
+      "step":{
+         "init":{
+            "data":{
+               "notify":"Pokazuj powiadomienia o najnowszych wiadomościach",
+               "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
+               "student_name":"Wybierz ucznia"
             }
-        }
-     }
-  }
+         }
+      }
+   }
 }

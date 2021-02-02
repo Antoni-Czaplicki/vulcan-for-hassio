@@ -1,37 +1,39 @@
-from homeassistant.helpers.entity import Entity
-import json
-from vulcan import Vulcan
 import asyncio
 import datetime
 from datetime import timedelta
+import json
+
+from vulcan import Account, Keystore, Vulcan, VulcanHebe
+
 from homeassistant.helpers import config_validation as cv, entity_platform, service
-from .const import (
-    CONF_STUDENT_NAME,
-)
-from .__init__ import client
+from homeassistant.helpers.entity import Entity
+
 from . import DOMAIN
+from .const import CONF_STUDENT_NAME
+
+with open(".vulcan/keystore.json") as f:
+    keystore = Keystore.load(f)
+with open(".vulcan/account.json") as f:
+    account = Account.load(f)
+client = VulcanHebe(keystore, account)
 
 
-def get_lesson_info(self, days_to_add=0):
-    self.lesson_1 = {}
-    self.lesson_2 = {}
-    self.lesson_3 = {}
-    self.lesson_4 = {}
-    self.lesson_5 = {}
-    self.lesson_6 = {}
-    self.lesson_7 = {}
-    self.lesson_8 = {}
-    self.lesson_9 = {}
-    self.lesson_10 = {}
-
-    for Lesson in client.get_lessons(
-        datetime.date.today() + timedelta(days=days_to_add)
+async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"):
+    await client.select_student()
+    for student in await client.get_students():
+        if student.pupil.id == student_id:
+            client.student = student
+            break
+    dict_ans = {}
+    list_ans = []
+    async for Lesson in await client.data.get_lessons(
+        date_from=date_from, date_to=date_to
     ):
         temp_dict = {}
-        temp_dict["number"] = Lesson.number
-        lesson = str(Lesson.number)
+        temp_dict["number"] = Lesson.time.position
+        lesson = str(Lesson.time.position)
         temp_dict["lesson"] = Lesson.subject.name
-        temp_dict["room"] = Lesson.room
+        temp_dict["room"] = Lesson.room.code
         temp_dict["visible"] = Lesson.visible
         temp_dict["changes"] = Lesson.changes
         temp_dict["group"] = Lesson.group
@@ -39,6 +41,8 @@ def get_lesson_info(self, days_to_add=0):
         temp_dict["time"] = (
             Lesson.time.from_.strftime("%H:%M") + "-" + Lesson.time.to.strftime("%H:%M")
         )
+        if temp_dict["changes"] == None:
+            temp_dict["changes"] = ""
         if "przeniesiona na lekcję" in temp_dict["changes"]:
             temp_dict["lesson"] = "Lekcja przeniesiona (" + temp_dict["lesson"] + ")"
         elif "przeniesiona z lekcji" in temp_dict["changes"]:
@@ -51,169 +55,72 @@ def get_lesson_info(self, days_to_add=0):
         ):
             temp_dict["lesson"] = "Lekcja odwołana (" + temp_dict["lesson"] + ")"
         if temp_dict["visible"] == True:
-            setattr(self, "lesson_" + lesson, temp_dict)
+            if type_ == "dict":
+                dict_ans["lesson_" + lesson] = temp_dict
+            elif type_ == "list":
+                list_ans.append(temp_dict)
 
-    lesson_ans = {}
-    if self.lesson_1 == {}:
-        self.lesson_1 = {
-            "number": 1,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_2 == {}:
-        self.lesson_2 = {
-            "number": 2,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_3 == {}:
-        self.lesson_3 = {
-            "number": 3,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_4 == {}:
-        self.lesson_4 = {
-            "number": 4,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_5 == {}:
-        self.lesson_5 = {
-            "number": 5,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_6 == {}:
-        self.lesson_6 = {
-            "number": 6,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_7 == {}:
-        self.lesson_7 = {
-            "number": 7,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_8 == {}:
-        self.lesson_8 = {
-            "number": 8,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_9 == {}:
-        self.lesson_9 = {
-            "number": 9,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-    if self.lesson_10 == {}:
-        self.lesson_10 = {
-            "number": 10,
-            "lesson": "-",
-            "room": "-",
-            "group": "-",
-            "teacher": "-",
-            "time": "-",
-            "changes": "-",
-        }
-
-    i = 1
-    for _ in range(10):
-        dict_ans = {
-            "lesson_1": self.lesson_1,
-            "lesson_2": self.lesson_2,
-            "lesson_3": self.lesson_3,
-            "lesson_4": self.lesson_4,
-            "lesson_5": self.lesson_5,
-            "lesson_6": self.lesson_6,
-            "lesson_7": self.lesson_7,
-            "lesson_8": self.lesson_8,
-            "lesson_9": self.lesson_9,
-            "lesson_10": self.lesson_10,
-        }
-    return dict_ans
+    for num in range(10):
+        if not "lesson_" + str(num + 1) in dict_ans:
+            dict_ans["lesson_" + str(num + 1)] = {
+                "number": num + 1,
+                "lesson": "-",
+                "room": "-",
+                "group": "-",
+                "teacher": "-",
+                "time": "-",
+                "changes": "-",
+            }
+    if type_ == "dict":
+        return dict_ans
+    elif type_ == "list":
+        return list_ans
 
 
-def get_student_info(student_name):
+async def get_student_info(student_id):
+    await client.select_student()
+    for student in await client.get_students():
+        if student.pupil.id == student_id:
+            client.student = student
+            break
     student_info = {}
-    for student in client.get_students():
-        if student.name == student_name:
-            id = student.id
-            class_ = student.class_.name
-            school = student.school.name
-            name = student.name
-        else:
-            name = student.name
-            id = student.id
-            class_ = student.class_.name
-            school = student.school.name
-    student_info["name"] = name
-    student_info["id"] = id
-    student_info["class"] = class_
-    student_info["school"] = school
+    for student in await client.get_students():
+        if student.pupil.id == student_id:
+            student_info["first_name"] = student.pupil.first_name
+            if student.pupil.second_name:
+                student_info["second_name"] = student.pupil.second_name
+            student_info["last_name"] = student.pupil.last_name
+            student_info["full_name"] = student.full_name
+            student_info["id"] = student.pupil.id
+            student_info["class"] = ""  # student.class_.name
+            student_info["school"] = student.school.name
     return student_info
 
 
-def get_latest_attendance(self):
-    self.latest_attendance = {}
+async def get_latest_attendance(student_id):
+    await client.select_student()
+    for student in await client.get_students():
+        if student.pupil.id == student_id:
+            client.student = student
+            break
+    latest_attendance = {}
 
-    for attendance in client.get_attendance():
-        temp_dict = {}
-        if attendance.category != None:
-            temp_dict["content"] = attendance.category.name
-            temp_dict["lesson_name"] = attendance.subject.name
-            temp_dict["lesson_number"] = attendance.time.number
-            temp_dict["lesson_date"] = str(attendance.date)
-            temp_dict["lesson_time"] = (
+    async for attendance in await client.data.get_attendance():
+        latest_attendance = {}
+        if attendance.presence_type != None:
+            latest_attendance["content"] = attendance.presence_type.name
+            latest_attendance["lesson_name"] = attendance.subject.name
+            latest_attendance["lesson_number"] = attendance.time.position
+            latest_attendance["lesson_date"] = str(attendance.date.date)
+            latest_attendance["lesson_time"] = (
                 attendance.time.from_.strftime("%H:%M")
                 + "-"
                 + attendance.time.to.strftime("%H:%M")
             )
-            temp_dict["datetime"] = datetime.datetime.combine(
-                attendance.date, attendance.time.from_
-            )
-        setattr(self, "latest_attendance", temp_dict)
+            latest_attendance["datetime"] = attendance.date_modified.date_time
 
-    if self.latest_attendance == {}:
-        self.latest_attendance = {
+    if latest_attendance == {}:
+        latest_attendance = {
             "content": "-",
             "lesson_name": "-",
             "lesson_number": "-",
@@ -222,25 +129,29 @@ def get_latest_attendance(self):
             "datetime": "-",
         }
 
-    return self.latest_attendance
+    return latest_attendance
 
 
-def get_latest_grade(self):
-    self.latest_grade = {}
+async def get_latest_grade(student_id):
+    await client.select_student()
+    for student in await client.get_students():
+        if student.pupil.id == student_id:
+            client.student = student
+            break
+    latest_grade = {}
 
-    for grade in client.get_grades():
-        temp_dict = {}
-        temp_dict["content"] = grade.content
-        temp_dict["weight"] = grade.weight
-        temp_dict["description"] = grade.description
-        temp_dict["value"] = grade.value
-        temp_dict["teacher"] = grade.teacher.name
-        temp_dict["subject"] = grade.subject.name
-        temp_dict["date"] = grade.date
-        setattr(self, "latest_grade", temp_dict)
+    async for grade in await client.data.get_grades():
+        latest_grade = {}
+        latest_grade["content"] = grade.content
+        latest_grade["weight"] = grade.column.weight
+        latest_grade["description"] = grade.column.name
+        latest_grade["value"] = grade.value
+        latest_grade["teacher"] = grade.teacher_created.display_name
+        latest_grade["subject"] = grade.column.subject.name
+        latest_grade["date"] = grade.date_created.date.strftime("%Y.%m.%d")
 
-    if self.latest_grade == {}:
-        self.latest_grade = {
+    if latest_grade == {}:
+        latest_grade = {
             "content": "-",
             "date": "-",
             "weight": "-",
@@ -250,19 +161,29 @@ def get_latest_grade(self):
             "value": 0,
         }
 
-    return self.latest_grade
+    return latest_grade
 
 
-def get_homework(self):
+async def get_next_homework(student_id):
+    await client.select_student()
+    for student in await client.get_students():
+        if student.pupil.id == student_id:
+            client.student = student
+            break
     next_homework = {}
-    for homework in client.get_homework(
-        datetime.date.today(), datetime.date.today() + timedelta(7)
-    ):
-        next_homework = {}
-        next_homework["description"] = homework.description
-        next_homework["subject"] = homework.subject.name
-        next_homework["teacher"] = homework.teacher.name
-        next_homework["date"] = homework.date.strftime("%d.%m.%Y")
+    async for homework in await client.data.get_homework():
+        for i in range(7):
+            if (
+                homework.deadline.date >= datetime.date.today()
+                and homework.deadline.date <= datetime.date.today() + timedelta(i)
+            ):
+                next_homework = {}
+                next_homework["description"] = homework.content
+                next_homework["subject"] = homework.subject.name
+                next_homework["teacher"] = homework.creator.name
+                next_homework["date"] = homework.deadline.date.strftime("%d.%m.%Y")
+                if exam.content != None:
+                    break
 
     if next_homework == {}:
         next_homework = {
@@ -275,17 +196,29 @@ def get_homework(self):
     return next_homework
 
 
-def get_exam(self):
+async def get_next_exam(student_id):
+    await client.select_student()
+    for student in await client.get_students():
+        if student.pupil.id == student_id:
+            client.student = student
+            break
     next_exam = {}
-    for exam in client.get_exams(
-        datetime.date.today(), datetime.date.today() + timedelta(7)
-    ):
-        next_exam = {}
-        next_exam["description"] = exam.description
-        next_exam["subject"] = exam.subject.name
-        next_exam["type"] = exam.type.name
-        next_exam["teacher"] = exam.teacher.name
-        next_exam["date"] = exam.date.strftime("%d.%m.%Y")
+    async for exam in await client.data.get_exams():
+        for i in range(7):
+            if (
+                exam.deadline.date >= datetime.date.today()
+                and exam.deadline.date <= datetime.date.today() + timedelta(i)
+            ):
+                next_exam = {}
+                next_exam["description"] = exam.topic
+                if exam.topic == "":
+                    next_exam["description"] = exam.type + " " + exam.subject.name
+                next_exam["subject"] = exam.subject.name
+                next_exam["type"] = exam.type
+                next_exam["teacher"] = exam.creator.name
+                next_exam["date"] = exam.deadline.date.strftime("%d.%m.%Y")
+                if exam.type != None:
+                    break
 
     if next_exam == {}:
         next_exam = {
@@ -296,20 +229,15 @@ def get_exam(self):
             "date": "-",
         }
 
-    if next_exam["type"] == "SHORT_TEST":
-        next_exam["type"] = "Kartkówka"
-    elif next_exam["type"] == "CLASS_TEST":
-        next_exam["type"] = "Praca Klasowa"
-    elif next_exam["type"] == "EXAM":
-        next_exam["type"] = "Sprawdzian"
-
     return next_exam
 
 
 def get_latest_message(self):
+    with open("vulcan.json") as f:
+        certificate = json.load(f)
     self.latest_message = {}
 
-    for message in client.get_messages():
+    for message in Vulcan(certificate).get_messages():
         temp_dict = {}
         temp_dict["title"] = message.title
         temp_dict["content"] = message.content
