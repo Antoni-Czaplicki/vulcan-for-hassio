@@ -139,9 +139,14 @@ class VulcanLessonEntity(VulcanEntity):
         }
 
     async def async_update(self):
-        self.lesson_data = await get_lesson_info(
-            student_id=self.student_id, date_from=self.num_tomorrow
-        )
+        try:
+            self.lesson_data = await get_lesson_info(
+                student_id=self.student_id, date_from=self.num_tomorrow
+            )
+        except ContentTypeError:
+            self.lesson_data = await get_lesson_info(
+                student_id=self.student_id, date_from=self.num_tomorrow
+            )
         self.lesson = self.lesson_data["lesson_" + self.number]
         self._state = self.lesson["lesson"]
 
