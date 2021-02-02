@@ -1,0 +1,13 @@
+sudo: false
+language: python
+python: 3.9
+
+jobs:
+  include:
+  - name: Lint
+    before_install:
+      - skip
+    install:
+      - pip install black
+    script:
+      - black --check --verbose .
