@@ -5,7 +5,7 @@
 View your vulcan data as Home Assistant sensors and use it in automations. You can add multiple students by adding integration again.
 
 ## Get started
-To get started login as mobile app in Integrations page. In integration options you can select student and enable notifications. Actually only one student is supported.  \n
+To get started login as mobile app in Integrations page. In integration options you can select student and enable notifications. Actually only one student is supported.   
 You can easily add sensors to the lovelace interface using the "Add to Lovelace UI" option in the device page.
 ![image](docs/images/dashboard.png)
 
@@ -22,7 +22,7 @@ Student's latest grade.
 ![image](docs/images/grade.png)
 
 ## Messages
-~Latest message sensor. You can activate notification in integration options.~
+~Latest message sensor. You can activate notification in integration options.~  
 Actualy not available - new API doesn't have this feature yet, it will be added again soon.
 ![image](docs/images/message.png)
 
