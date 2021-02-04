@@ -190,10 +190,15 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 students = await client.get_students()
                 await client.close()
                 config_data["login"] = account.user_login
+                students_number = 0
+                for _ in students:
+                    students_number += 1
                 for student in students:
                     existing_entry = await self.async_set_unique_id(
                         str(student.pupil.id)
                     )
+                    config_data["student_id"] = str(student.pupil.id)
+                    config_data["students_number"] = students_number
                     self.hass.config_entries.async_update_entry(
                         existing_entry, data=config_data
                     )
