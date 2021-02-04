@@ -17,8 +17,9 @@ def reg(token, symbol, pin):
 async def register(token, symbol, pin):
     Path(".vulcan").mkdir(parents=True, exist_ok=True)
     keystore = Keystore.create(device_model="Home Assistant")
-    with open(".vulcan/keystore.json", "w") as f:
-        f.write(keystore.as_json)
     account = await Account.register(keystore, token, symbol, pin)
-    with open(".vulcan/account.json", "w") as f:
+    with open(".vulcan/keystore-" + account.user_login + ".json", "w") as f:
+        f.write(keystore.as_json)
+    with open(".vulcan/account-" + account.user_login + ".json", "w") as f:
         f.write(account.as_json)
+    return {"account": account, "keystore": keystore}

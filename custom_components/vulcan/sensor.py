@@ -6,17 +6,13 @@ from vulcan import Vulcan
 from homeassistant.components import persistent_notification
 
 from . import DOMAIN, VulcanEntity
-from .const import (
-    CONF_ATTENDANCE_NOTIFY,
-    CONF_NOTIFY,
-    CONF_STUDENT_NAME,
-    PARALLEL_UPDATES,
-)
+from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, PARALLEL_UPDATES, SCAN_INTERVAL
 from .get_data import (
     get_latest_attendance,
     get_latest_grade,
     get_latest_message,
     get_lesson_info,
+    get_lucky_number,
     get_next_exam,
     get_next_homework,
     get_student_info,
@@ -42,6 +38,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     hass.data[DOMAIN]["grade"] = await get_latest_grade(
         config_entry.data.get("student_id")
     )
+    hass.data[DOMAIN]["lucky_number"] = await get_lucky_number()
     hass.data[DOMAIN]["attendance"] = await get_latest_attendance(
         config_entry.data.get("student_id")
     )
@@ -62,6 +59,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([LatestGrade(hass)])
     # async_add_entities([LatestMessage(hass)])
     async_add_entities([LatestAttendance(hass)])
+    async_add_entities([LuckyNumber(hass)])
     async_add_entities([NextHomework(hass)])
     async_add_entities([NextExam(hass)])
     async_add_entities([VulcanLessonEntity(hass, 1, True)])
@@ -143,7 +141,7 @@ class VulcanLessonEntity(VulcanEntity):
             self.lesson_data = await get_lesson_info(
                 student_id=self.student_id, date_from=self.num_tomorrow
             )
-        except ContentTypeError:
+        except:
             self.lesson_data = await get_lesson_info(
                 student_id=self.student_id, date_from=self.num_tomorrow
             )
@@ -296,6 +294,7 @@ class LatestGrade(VulcanEntity):
     def device_state_attributes(self):
         grade_info = self.latest_grade
         atr = {
+            "subject": grade_info["subject"],
             "weight": grade_info["weight"],
             "teacher": grade_info["teacher"],
             "date": grade_info["date"],
@@ -403,3 +402,44 @@ class NextExam(VulcanEntity):
     async def async_update(self):
         self.next_exam = await get_next_exam(self.student_id)
         self._state = self.next_exam["description"]
+
+
+class LuckyNumber(VulcanEntity):
+    def __init__(self, hass):
+        self.student_info = hass.data[DOMAIN]["student_info"]
+        self.student_name = self.student_info["full_name"]
+        self.student_id = str(self.student_info["id"])
+        self.lucky_number = hass.data[DOMAIN]["lucky_number"]
+        self._state = self.lucky_number["number"]
+
+        if hass.data[DOMAIN]["students_number"] == 1:
+            name = ""
+            self.device_student_name = ""
+        else:
+            name = " - " + self.student_info["full_name"]
+            self.device_student_name = self.student_info["full_name"] + ": "
+
+        self._name = "Lucky Number" + name
+        self._unique_id = "lucky_number_" + self.student_id
+        self._icon = "mdi:ticket-confirmation-outline"
+
+    @property
+    def device_state_attributes(self):
+        atr = {
+            "date": self.lucky_number["date"],
+        }
+        return atr
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "lucky_number" + self.student_id)},
+            "manufacturer": "Uonet +",
+            "model": self.student_info["class"] + " " + self.student_info["school"],
+            "name": self.device_student_name + "Lucky Number",
+            "entry_type": "service",
+        }
+
+    async def async_update(self):
+        self.lucky_number = await get_lucky_number()
+        self._state = self.lucky_number["number"]

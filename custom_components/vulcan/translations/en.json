@@ -1,7 +1,7 @@
 {
    "config":{
       "abort":{
-         "single_instance_allowed":"Already configured. Only a single configuration possible.",
+         "already_configured":"That student has already been added.",
          "all_student_already_configured":"All students have already been added.",
 		 "reauth_successful":"Reauth successful"
       },
@@ -9,7 +9,7 @@
          "text":"{error_text}"
       },
       "step":{
-         "user":{
+         "auth":{
             "description":"Login to your Vulcan Account using mobile app registration page.",
             "data":{
                "token":"Token",
@@ -29,6 +29,12 @@
             "description":"Select student, you can add more students by adding integration again.",
             "data":{
                "student_name":"Select student"
+            }
+         },
+         "select_saved_credentials":{
+            "description":"Select saved credentials.",
+            "data":{
+               "credentials":"Login"
             }
          },
          "add_student":{

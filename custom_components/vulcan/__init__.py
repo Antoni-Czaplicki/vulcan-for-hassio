@@ -10,6 +10,8 @@ from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+client = None
+
 
 async def async_setup(hass, config) -> bool:
     vulcan: Optional[ConfigType] = config.get(DOMAIN)
@@ -20,24 +22,30 @@ async def async_setup(hass, config) -> bool:
 
 async def async_setup_entry(hass, config_entry):
     autherror = False
+    global client
     try:
-        with open(".vulcan/keystore.json") as f:
+        with open(".vulcan/keystore-" + config_entry.data.get("login") + ".json") as f:
             keystore = Keystore.load(f)
-        with open(".vulcan/account.json") as f:
+        with open(".vulcan/account-" + config_entry.data.get("login") + ".json") as f:
             account = Account.load(f)
         client = VulcanHebe(keystore, account)
+        await client.select_student()
         students = await client.get_students()
         for student in students:
             if student.pupil.id == config_entry.data.get("student_id"):
                 client.student = student
                 break
-        await client.close()
+        # await client.close()
     except:
         autherror = True
 
     if autherror == True:
         hass.async_create_task(
-            hass.config_entries.flow.async_init(DOMAIN, context={"source": "reauth"})
+            hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": "reauth"},
+                data=config_entry.data,
+            )
         )
         return False
 

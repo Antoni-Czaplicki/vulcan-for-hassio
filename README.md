@@ -6,7 +6,7 @@ View your vulcan data as Home Assistant sensors and use it in automations.
 
 ## Get started
 To get started login as mobile app in Integrations page. In integration options you can select student and enable notifications. Actually only one student is supported.  
-![image](https://raw.githubusercontent.com/Czapla-dev/vulcan-for-hassio/master/docs/images/total.jpg)
+![image](docs/images/dashboard.png)
 
 ## Timetable
 Integration is creating ten entities for today and also ten for tomorrow. There are plans to add viewing entities in calendar.  

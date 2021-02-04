@@ -8,22 +8,10 @@ from vulcan import Account, Keystore, Vulcan, VulcanHebe
 from homeassistant.helpers import config_validation as cv, entity_platform, service
 from homeassistant.helpers.entity import Entity
 
-from . import DOMAIN
-from .const import CONF_STUDENT_NAME
-
-with open(".vulcan/keystore.json") as f:
-    keystore = Keystore.load(f)
-with open(".vulcan/account.json") as f:
-    account = Account.load(f)
-client = VulcanHebe(keystore, account)
+from . import DOMAIN, client
 
 
 async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"):
-    await client.select_student()
-    for student in await client.get_students():
-        if student.pupil.id == student_id:
-            client.student = student
-            break
     dict_ans = {}
     list_ans = []
     async for Lesson in await client.data.get_lessons(
@@ -37,7 +25,7 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
         temp_dict["visible"] = Lesson.visible
         temp_dict["changes"] = Lesson.changes
         temp_dict["group"] = Lesson.group
-        temp_dict["teacher"] = Lesson.teacher.name
+        temp_dict["teacher"] = Lesson.teacher.display_name
         temp_dict["time"] = (
             Lesson.time.from_.strftime("%H:%M") + "-" + Lesson.time.to.strftime("%H:%M")
         )
@@ -78,35 +66,36 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
 
 
 async def get_student_info(student_id):
-    await client.select_student()
-    for student in await client.get_students():
-        if student.pupil.id == student_id:
-            client.student = student
-            break
     student_info = {}
     for student in await client.get_students():
-        if student.pupil.id == student_id:
+        if str(student.pupil.id) == str(student_id):
             student_info["first_name"] = student.pupil.first_name
             if student.pupil.second_name:
                 student_info["second_name"] = student.pupil.second_name
             student_info["last_name"] = student.pupil.last_name
-            student_info["full_name"] = student.full_name
+            student_info["full_name"] = (
+                student.pupil.first_name + " " + student.pupil.last_name
+            )
             student_info["id"] = student.pupil.id
             student_info["class"] = ""  # student.class_.name
             student_info["school"] = student.school.name
     return student_info
 
 
-async def get_latest_attendance(student_id):
-    await client.select_student()
-    for student in await client.get_students():
-        if student.pupil.id == student_id:
-            client.student = student
-            break
-    latest_attendance = {}
+async def get_lucky_number():
+    lucky_number = {}
+    number = await client.data.get_lucky_number()
+    try:
+        lucky_number["number"] = number.number
+        lucky_number["date"] = number.date.strftime("%d.%m.%Y")
+    except:
+        lucky_number = {"number": "-", "date": "-"}
+    return lucky_number
 
+
+async def get_latest_attendance(student_id):
+    latest_attendance = {}
     async for attendance in await client.data.get_attendance():
-        latest_attendance = {}
         if attendance.presence_type != None:
             latest_attendance["content"] = attendance.presence_type.name
             latest_attendance["lesson_name"] = attendance.subject.name
@@ -133,11 +122,6 @@ async def get_latest_attendance(student_id):
 
 
 async def get_latest_grade(student_id):
-    await client.select_student()
-    for student in await client.get_students():
-        if student.pupil.id == student_id:
-            client.student = student
-            break
     latest_grade = {}
 
     async for grade in await client.data.get_grades():
@@ -148,7 +132,7 @@ async def get_latest_grade(student_id):
         latest_grade["value"] = grade.value
         latest_grade["teacher"] = grade.teacher_created.display_name
         latest_grade["subject"] = grade.column.subject.name
-        latest_grade["date"] = grade.date_created.date.strftime("%Y.%m.%d")
+        latest_grade["date"] = grade.date_created.date.strftime("%d.%m.%Y")
 
     if latest_grade == {}:
         latest_grade = {
@@ -165,11 +149,6 @@ async def get_latest_grade(student_id):
 
 
 async def get_next_homework(student_id):
-    await client.select_student()
-    for student in await client.get_students():
-        if student.pupil.id == student_id:
-            client.student = student
-            break
     next_homework = {}
     async for homework in await client.data.get_homework():
         for i in range(7):
@@ -180,7 +159,7 @@ async def get_next_homework(student_id):
                 next_homework = {}
                 next_homework["description"] = homework.content
                 next_homework["subject"] = homework.subject.name
-                next_homework["teacher"] = homework.creator.name
+                next_homework["teacher"] = homework.creator.display_name
                 next_homework["date"] = homework.deadline.date.strftime("%d.%m.%Y")
                 if exam.content != None:
                     break
@@ -197,11 +176,6 @@ async def get_next_homework(student_id):
 
 
 async def get_next_exam(student_id):
-    await client.select_student()
-    for student in await client.get_students():
-        if student.pupil.id == student_id:
-            client.student = student
-            break
     next_exam = {}
     async for exam in await client.data.get_exams():
         for i in range(7):
@@ -215,7 +189,7 @@ async def get_next_exam(student_id):
                     next_exam["description"] = exam.type + " " + exam.subject.name
                 next_exam["subject"] = exam.subject.name
                 next_exam["type"] = exam.type
-                next_exam["teacher"] = exam.creator.name
+                next_exam["teacher"] = exam.creator.display_name
                 next_exam["date"] = exam.deadline.date.strftime("%d.%m.%Y")
                 if exam.type != None:
                     break
@@ -254,13 +228,10 @@ def get_latest_message(self):
 
     if self.latest_message == {}:
         self.latest_message = {
+            "title": "-",
             "content": "-",
             "date": "-",
-            "weight": "-",
-            "description": "-",
-            "subkect": "-",
-            "teacher": "-",
-            "value": 0,
+            "sender": "-",
         }
 
     return self.latest_message

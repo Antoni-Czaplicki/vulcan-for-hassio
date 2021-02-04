@@ -1,15 +1,15 @@
 {
    "config":{
       "abort":{
-         "student_already_configured":"Ten uczeń został już dodany.",
-         "all_student_already_configured":"Wszyscy uczniowie zostali już dodani.",
+         "already_configured":"Ten uczeń został już dodany.",
+         "all_student_already_configured":"Wszyscy uczniowie z tego konta zostali już dodani.",
 		 "reauth_successful":"Zalogowano pomyślnie"
       },
       "error":{
-         "text":"Wprowadzono nieprawidłowe dane"
+         "text":"{error_text}"
       },
       "step":{
-         "user":{
+         "auth":{
             "description":"Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
             "data":{
                "token":"Token",
@@ -28,7 +28,13 @@
          "select_student":{
             "description":"Wybierz ucznia, możesz później dodać kolejnych dodając integrację jeszcze raz.",
             "data":{
-               "student_name":"Wybierz ucznia"
+               "student":"Uczeń"
+            }
+         },
+         "select_saved_credentials":{
+            "description":"Wybierz zapisane dane logowania.",
+            "data":{
+               "credentials":"Login"
             }
          },
          "add_student":{
@@ -47,8 +53,7 @@
          "init":{
             "data":{
                "notify":"Pokazuj powiadomienia o najnowszych wiadomościach",
-               "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
-               "student_name":"Wybierz ucznia"
+               "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji"
             }
          }
       }

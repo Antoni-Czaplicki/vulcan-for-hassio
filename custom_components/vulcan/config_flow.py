@@ -10,7 +10,7 @@ from homeassistant.core import callback
 from . import DOMAIN, register
 
 _LOGGER = logging.getLogger(__name__)
-from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, CONF_STUDENT_NAME
+from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY
 
 
 class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -20,38 +20,20 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Get the options flow for this handler."""
         return VulcanOptionsFlowHandler(config_entry)
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(self, user_input=None, is_new_account=False):
         """GUI > Configuration > Integrations > Plus > Uonet+ Vulcan for Home Assistant"""
         error = None
-        if self._async_current_entries():
-            try:
-                if (
-                    os.stat(".vulcan/keystore.json").st_size != 0
-                    and os.stat(".vulcan/account.json").st_size != 0
-                ):
-                    with open(".vulcan/keystore.json") as f:
-                        keystore = Keystore.load(f)
-                    with open(".vulcan/account.json") as f:
-                        account = Account.load(f)
-                    client = VulcanHebe(keystore, account)
-                    self._students = await client.get_students()
-                    await client.close()
-                    if len(self._students) == 1:
-                        return self.async_abort(reason="all_student_already_configured")
-                    else:
-                        return await self.async_step_add_student()
-            except:
-                pass
+        regdata = None
+        if self._async_current_entries() and is_new_account == False:
+            return await self.async_step_add_student()
 
         if user_input is not None:
-            error = await register.register(
+            regdata = await register.register(
                 user_input["token"], user_input["symbol"], user_input["pin"]
             )
             if not error:
-                with open(".vulcan/keystore.json") as f:
-                    keystore = Keystore.load(f)
-                with open(".vulcan/account.json") as f:
-                    account = Account.load(f)
+                account = regdata["account"]
+                keystore = regdata["keystore"]
                 client = VulcanHebe(keystore, account)
                 self._students = await client.get_students()
                 await client.close()
@@ -60,7 +42,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     return await self.async_step_select_student()
                 else:
                     self._student = self._students[0]
-                await self.async_set_unique_id(self._student.pupil.id)
+                await self.async_set_unique_id(str(self._student.pupil.id))
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title=self._student.pupil.first_name
@@ -68,13 +50,14 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     + self._student.pupil.last_name,
                     data={
                         "user_input": user_input,
-                        "student_id": self._student.pupil.id,
+                        "student_id": str(self._student.pupil.id),
                         "students_number": len(self._students),
+                        "login": account.user_login,
                     },
                 )
 
         return self.async_show_form(
-            step_id="user",
+            step_id="auth",
             data_schema=vol.Schema(
                 {
                     vol.Required("token"): str,
@@ -83,13 +66,12 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             description_placeholders={
-                "error_text": "\nERROR: " + error if error else ""
+                "error_text": "\nERROR: " + regdata if regdata else ""
             },
         )
 
     async def async_step_select_student(self, user_input=None):
         error = None
-
         students_list = {}
         for student in self._students:
             students_list[str(student.pupil.id)] = (
@@ -97,21 +79,22 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         if user_input is not None:
-            student_id = user_input[CONF_STUDENT_NAME]
-            await self.async_set_unique_id(student_id)
+            student_id = user_input["student"]
+            await self.async_set_unique_id(str(student_id))
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
-                title=get_students_list()[student_id],
+                title=students_list[student_id],
                 data={
                     "user_input": user_input,
-                    "student_id": student_id,
+                    "student_id": str(student_id),
                     "students_number": len(students_list),
+                    "login": self.account.user_login,
                 },
             )
 
         data_schema = {
             vol.Required(
-                CONF_STUDENT_NAME,
+                "student",
             ): vol.In(students_list),
         }
         return self.async_show_form(
@@ -122,17 +105,64 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
+    async def async_step_select_saved_credentials(self, user_input=None):
+        error = None
+        credentials_list = {}
+        for file in os.listdir(".vulcan"):
+            if file.startswith("account-") and file.endswith(".json"):
+                credentials_list[os.path.join(".vulcan", file)] = file[
+                    len("account-") :
+                ][: -len(".json")]
+
+        if user_input is not None:
+            with open(user_input["credentials"].replace("account", "keystore")) as f:
+                keystore = Keystore.load(f)
+            with open(user_input["credentials"]) as f:
+                account = Account.load(f)
+            self.account = account
+            client = VulcanHebe(keystore, account)
+            self._students = await client.get_students()
+            await client.close()
+            if len(self._students) == 1:
+                return self.async_abort(reason="all_student_already_configured")
+            return await self.async_step_select_student()
+
+        data_schema = {
+            vol.Required(
+                "credentials",
+            ): vol.In(credentials_list),
+        }
+        return self.async_show_form(
+            step_id="select_saved_credentials",
+            data_schema=vol.Schema(data_schema),
+            description_placeholders={
+                "error_text": "\nERROR: " + error if error else ""
+            },
+        )
+
     async def async_step_add_student(self, user_input=None):
         error = None
         if user_input is not None:
             if user_input["use_saved_credentials"] == True:
-                return await self.async_step_select_student()
+                if len(os.listdir(".vulcan")) == 2:
+                    for file in os.listdir(".vulcan"):
+                        if file.startswith("keystore"):
+                            with open(os.path.join(".vulcan", file)) as f:
+                                keystore = Keystore.load(f)
+                        elif file.startswith("account"):
+                            with open(os.path.join(".vulcan", file)) as f:
+                                account = Account.load(f)
+                    self.account = account
+                    client = VulcanHebe(keystore, account)
+                    self._students = await client.get_students()
+                    await client.close()
+                    if len(self._students) == 1:
+                        return self.async_abort(reason="all_student_already_configured")
+                    return await self.async_step_select_student()
+                else:
+                    return await self.async_step_select_saved_credentials()
             else:
-                if os.path.exists(".vulcan/keystore.json"):
-                    os.remove(".vulcan/keystore.json")
-                if os.path.exists(".vulcan/account.json"):
-                    os.remove(".vulcan/account.json")
-                return await self.async_step_user()
+                return await self.async_step_user(is_new_account=True)
 
         data_schema = {
             vol.Required("use_saved_credentials", default=True): bool,
@@ -145,23 +175,28 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_reauth(self, user_input=None):
+    async def async_step_reauth(self, config_data):
         error = None
-
+        user_input = None
+        regdata = None
         if user_input is not None:
-            error = await register.register(
+            regdata = await register.register(
                 user_input["token"], user_input["symbol"], user_input["pin"]
             )
             if not error:
-                with open(".vulcan/keystore.json") as f:
-                    keystore = Keystore.load(f)
-                with open(".vulcan/account.json") as f:
-                    account = Account.load(f)
+                account = regdata["account"]
+                keystore = regdata["keystore"]
                 client = VulcanHebe(keystore, account)
                 students = await client.get_students()
                 await client.close()
+                config_data["login"] = account.user_login
                 for student in students:
-                    existing_entry = await self.async_set_unique_id(student.pupil.id)
+                    existing_entry = await self.async_set_unique_id(
+                        str(student.pupil.id)
+                    )
+                    self.hass.config_entries.async_update_entry(
+                        existing_entry, data=config_data
+                    )
                     await self.hass.config_entries.async_reload(existing_entry.entry_id)
                 return self.async_abort(reason="reauth_successful")
 
