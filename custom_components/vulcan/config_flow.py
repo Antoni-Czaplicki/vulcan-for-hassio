@@ -124,7 +124,20 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             self._students = await client.get_students()
             await client.close()
             if len(self._students) == 1:
-                return self.async_abort(reason="all_student_already_configured")
+                self._student = self._students[0]
+                await self.async_set_unique_id(str(self._student.pupil.id))
+                self._abort_if_unique_id_configured()
+                return self.async_create_entry(
+                    title=self._student.pupil.first_name
+                    + " "
+                    + self._student.pupil.last_name,
+                    data={
+                        "user_input": user_input,
+                        "student_id": str(self._student.pupil.id),
+                        "students_number": len(self._students),
+                        "login": account.user_login,
+                    },
+                )
             return await self.async_step_select_student()
 
         data_schema = {
