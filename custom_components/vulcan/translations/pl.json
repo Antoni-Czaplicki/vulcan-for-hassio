@@ -9,7 +9,7 @@
          "text":"{error_text}"
       },
       "step":{
-         "hotfix":{
+         "user":{
             "description":"Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
             "data":{
                "token":"Token",
