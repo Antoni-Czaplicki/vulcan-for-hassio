@@ -21,7 +21,6 @@ async def async_setup(hass, config) -> bool:
 
 
 async def async_setup_entry(hass, config_entry):
-    autherror = False
     global client
     try:
         with open(".vulcan/keystore-" + config_entry.data.get("login") + ".json") as f:
@@ -35,11 +34,7 @@ async def async_setup_entry(hass, config_entry):
             if student.pupil.id == config_entry.data.get("student_id"):
                 client.student = student
                 break
-        # await client.close()
     except:
-        autherror = True
-
-    if autherror == True:
         hass.async_create_task(
             hass.config_entries.flow.async_init(
                 DOMAIN,

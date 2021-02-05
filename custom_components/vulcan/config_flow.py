@@ -194,15 +194,21 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 for _ in students:
                     students_number += 1
                 for student in students:
-                    existing_entry = await self.async_set_unique_id(
-                        str(student.pupil.id)
-                    )
-                    config_data["student_id"] = str(student.pupil.id)
-                    config_data["students_number"] = students_number
-                    self.hass.config_entries.async_update_entry(
-                        existing_entry, title=f"{self._student.pupil.first_name} {self._student.pupil.last_name}" ,data=config_data
-                    )
-                    await self.hass.config_entries.async_reload(existing_entry.entry_id)
+                    for entry_id in self._async_current_ids():
+                        if str(student.pupil.id) == str(entry_id):
+                            existing_entry = await self.async_set_unique_id(
+                                str(student.pupil.id)
+                            )
+                            config_data["student_id"] = str(student.pupil.id)
+                            config_data["students_number"] = students_number
+                            self.hass.config_entries.async_update_entry(
+                                existing_entry,
+                                title=f"{self._student.pupil.first_name} {self._student.pupil.last_name}",
+                                data=config_data,
+                            )
+                            await self.hass.config_entries.async_reload(
+                                existing_entry.entry_id
+                            )
                 return self.async_abort(reason="reauth_successful")
 
         return self.async_show_form(
