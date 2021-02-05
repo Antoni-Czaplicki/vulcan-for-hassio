@@ -57,7 +57,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
         return self.async_show_form(
-            step_id="auth",
+            step_id="user",
             data_schema=vol.Schema(
                 {
                     vol.Required("token"): str,
