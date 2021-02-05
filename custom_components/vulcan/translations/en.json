@@ -9,7 +9,7 @@
          "text":"{error_text}"
       },
       "step":{
-         "auth":{
+         "user":{
             "description":"Login to your Vulcan Account using mobile app registration page.",
             "data":{
                "token":"Token",
