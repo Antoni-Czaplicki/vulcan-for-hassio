@@ -1,0 +1,20 @@
+language: python
+python: 3.9
+
+jobs:
+  include:
+  - name: Isort
+    before_install:
+      - skip
+    install:
+      - pip install isort
+    script:
+      - isort --check-only --profile black .
+  include:
+  - name: Black
+    before_install:
+      - skip
+    install:
+      - pip install black
+    script:
+      - black --check --verbose .
