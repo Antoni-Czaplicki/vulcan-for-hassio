@@ -1,8 +1,9 @@
 import datetime
 from datetime import timedelta
 
-from homeassistant.components import persistent_notification
 from vulcan import Vulcan
+
+from homeassistant.components import persistent_notification
 
 from . import DOMAIN, VulcanEntity
 from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, PARALLEL_UPDATES, SCAN_INTERVAL
@@ -92,13 +93,13 @@ class VulcanLessonEntity(VulcanEntity):
             name_tomorrow = " (Tomorrow)"
             self.tomorrow_device_id = "tomorrow_"
             self.device_name_tomorrow = "Tomorrow "
-            self.num_tomorrow = date_from = datetime.date.today() + timedelta(days=1)
+            self.num_tomorrow = timedelta(days=1)
         else:
             tomorrow = ""
             name_tomorrow = " "
             self.tomorrow_device_id = ""
             self.device_name_tomorrow = ""
-            self.num_tomorrow = date_from = datetime.date.today()
+            self.num_tomorrow = timedelta(days=0)
 
         if number == 10:
             space = chr(160)
@@ -138,11 +139,13 @@ class VulcanLessonEntity(VulcanEntity):
     async def async_update(self):
         try:
             self.lesson_data = await get_lesson_info(
-                student_id=self.student_id, date_from=self.num_tomorrow
+                student_id=self.student_id,
+                date_from=datetime.date.today() + self.num_tomorrow,
             )
         except:
             self.lesson_data = await get_lesson_info(
-                student_id=self.student_id, date_from=self.num_tomorrow
+                student_id=self.student_id,
+                date_from=datetime.date.today() + self.num_tomorrow,
             )
         self.lesson = self.lesson_data["lesson_" + self.number]
         self._state = self.lesson["lesson"]
