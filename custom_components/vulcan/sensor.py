@@ -1,9 +1,8 @@
 import datetime
 from datetime import timedelta
 
-from vulcan import Vulcan
-
 from homeassistant.components import persistent_notification
+from vulcan import Vulcan
 
 from . import DOMAIN, VulcanEntity
 from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, PARALLEL_UPDATES, SCAN_INTERVAL
