@@ -2,10 +2,9 @@ import logging
 import os
 
 import voluptuous as vol
-from vulcan import Account, Keystore, VulcanHebe
-
 from homeassistant import config_entries
 from homeassistant.core import callback
+from vulcan import Account, Keystore, VulcanHebe
 
 from . import DOMAIN, register
 
@@ -198,7 +197,6 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 client = VulcanHebe(keystore, account)
                 students = await client.get_students()
                 await client.close()
-                config_data = {"login": account.user_login}
                 students_number = 0
                 for _ in students:
                     students_number += 1
