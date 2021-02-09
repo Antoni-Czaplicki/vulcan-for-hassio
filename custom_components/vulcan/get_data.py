@@ -21,7 +21,10 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
         temp_dict["number"] = Lesson.time.position
         lesson = str(Lesson.time.position)
         temp_dict["lesson"] = Lesson.subject.name
-        temp_dict["room"] = Lesson.room.code
+        if Lesson.room is not None:
+            temp_dict["room"] = Lesson.room.code
+        else:
+            temp_dict["room"] = "-"
         temp_dict["visible"] = Lesson.visible
         temp_dict["changes"] = Lesson.changes
         temp_dict["group"] = Lesson.group
