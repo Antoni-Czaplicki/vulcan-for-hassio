@@ -2,7 +2,7 @@
 {
   "domain": "vulcan",
   "name": "Uonet+ Vulcan",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "config_flow": true,
   "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
   "dependencies": [
