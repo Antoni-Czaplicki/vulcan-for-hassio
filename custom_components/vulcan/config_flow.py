@@ -2,9 +2,10 @@ import logging
 import os
 
 import voluptuous as vol
+from vulcan import Account, Keystore, VulcanHebe
+
 from homeassistant import config_entries
 from homeassistant.core import callback
-from vulcan import Account, Keystore, VulcanHebe
 
 from . import DOMAIN, register
 
@@ -48,7 +49,6 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     + " "
                     + self._student.pupil.last_name,
                     data={
-                        "user_input": user_input,
                         "student_id": str(self._student.pupil.id),
                         "students_number": len(self._students),
                         "login": account.user_login,
@@ -84,7 +84,6 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_create_entry(
                 title=students_list[student_id],
                 data={
-                    "user_input": user_input,
                     "student_id": str(student_id),
                     "students_number": len(students_list),
                     "login": self.account.user_login,
@@ -131,7 +130,6 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     + " "
                     + self._student.pupil.last_name,
                     data={
-                        "user_input": user_input,
                         "student_id": str(self._student.pupil.id),
                         "students_number": len(self._students),
                         "login": account.user_login,
@@ -187,9 +185,8 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_reauth(self, config_data):
+    async def async_step_reauth(self, user_input=None):
         error = None
-        user_input = None
         regdata = None
         if user_input is not None:
             regdata = await register.register(
@@ -201,7 +198,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 client = VulcanHebe(keystore, account)
                 students = await client.get_students()
                 await client.close()
-                config_data["login"] = account.user_login
+                config_data = {"login": account.user_login}
                 students_number = 0
                 for _ in students:
                     students_number += 1
@@ -211,12 +208,14 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                             existing_entry = await self.async_set_unique_id(
                                 str(student.pupil.id)
                             )
-                            config_data["student_id"] = str(student.pupil.id)
-                            config_data["students_number"] = students_number
                             self.hass.config_entries.async_update_entry(
                                 existing_entry,
-                                title=f"{self._student.pupil.first_name} {self._student.pupil.last_name}",
-                                data=config_data,
+                                title=f"{student.pupil.first_name} {student.pupil.last_name}",
+                                data={
+                                    "login": account.user_login,
+                                    "student_id": str(student.pupil.id),
+                                    "students_number": students_number,
+                                },
                             )
                             await self.hass.config_entries.async_reload(
                                 existing_entry.entry_id

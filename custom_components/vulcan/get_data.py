@@ -1,12 +1,12 @@
 import asyncio
 import datetime
-import json
 from datetime import timedelta
+import json
 
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform, service
-from homeassistant.helpers.entity import Entity
 from vulcan import Account, Keystore, Vulcan, VulcanHebe
+
+from homeassistant.helpers import config_validation as cv, entity_platform, service
+from homeassistant.helpers.entity import Entity
 
 from . import DOMAIN, client
 
@@ -161,7 +161,7 @@ async def get_next_homework(student_id):
                 next_homework["subject"] = homework.subject.name
                 next_homework["teacher"] = homework.creator.display_name
                 next_homework["date"] = homework.deadline.date.strftime("%d.%m.%Y")
-                if exam.content != None:
+                if homework.content != None:
                     break
 
     if next_homework == {}:

@@ -1,9 +1,10 @@
 # This Integration uses unofficial Vulcan-api https://github.com/kapi2289/vulcan-api
 import logging
 
+from vulcan import Account, Keystore, VulcanHebe
+
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import ConfigType
-from vulcan import Account, Keystore, VulcanHebe
 
 from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, DOMAIN
 
@@ -38,7 +39,6 @@ async def async_setup_entry(hass, config_entry):
             hass.config_entries.flow.async_init(
                 DOMAIN,
                 context={"source": "reauth"},
-                data=config_entry.data,
             )
         )
         return False
