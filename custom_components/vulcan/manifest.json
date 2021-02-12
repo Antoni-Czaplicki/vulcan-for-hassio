@@ -5,7 +5,7 @@
   "version": "0.8.4",
   "config_flow": true,
   "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
-  "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues"
+  "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
   "dependencies": [
   ],
   "codeowners": [
