@@ -1,12 +1,12 @@
 import asyncio
 import datetime
-import json
 from datetime import timedelta
+import json
 
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform, service
-from homeassistant.helpers.entity import Entity
 from vulcan import Account, Keystore, Vulcan, VulcanHebe
+
+from homeassistant.helpers import config_validation as cv, entity_platform, service
+from homeassistant.helpers.entity import Entity
 
 from . import DOMAIN, client
 
@@ -29,31 +29,31 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
         temp_dict["changes"] = Lesson.changes
         temp_dict["group"] = Lesson.group
         temp_dict["teacher"] = Lesson.teacher.display_name
-        temp_dict["time"] = (
-            Lesson.time.from_.strftime("%H:%M") + "-" + Lesson.time.to.strftime("%H:%M")
-        )
+        temp_dict[
+            "time"
+        ] = f"{Lesson.time.from_.strftime('%H:%M')}-{Lesson.time.to.strftime('%H:%M')}"
         if temp_dict["changes"] == None:
             temp_dict["changes"] = ""
         if "przeniesiona na lekcję" in temp_dict["changes"]:
-            temp_dict["lesson"] = "Lekcja przeniesiona (" + temp_dict["lesson"] + ")"
+            temp_dict["lesson"] = f"Lekcja przeniesiona ({temp_dict['lesson']})"
         elif "przeniesiona z lekcji" in temp_dict["changes"]:
-            temp_dict["lesson"] = temp_dict["lesson"] + " " + temp_dict["changes"]
+            temp_dict["lesson"] = f"{temp_dict['lesson']} {temp_dict['changes']}"
         elif (
             "odwołana" in temp_dict["changes"]
             or "Okienko" in temp_dict["changes"]
             or "nieobecność" in temp_dict["changes"]
             or "okienko" in temp_dict["changes"]
         ):
-            temp_dict["lesson"] = "Lekcja odwołana (" + temp_dict["lesson"] + ")"
+            temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
         if temp_dict["visible"] == True:
             if type_ == "dict":
-                dict_ans["lesson_" + lesson] = temp_dict
+                dict_ans[f"lesson_{lesson}"] = temp_dict
             elif type_ == "list":
                 list_ans.append(temp_dict)
 
     for num in range(10):
-        if not "lesson_" + str(num + 1) in dict_ans:
-            dict_ans["lesson_" + str(num + 1)] = {
+        if not f"lesson_{str(num + 1)}" in dict_ans:
+            dict_ans[f"lesson_{str(num + 1)}"] = {
                 "number": num + 1,
                 "lesson": "-",
                 "room": "-",
@@ -76,9 +76,9 @@ async def get_student_info(student_id):
             if student.pupil.second_name:
                 student_info["second_name"] = student.pupil.second_name
             student_info["last_name"] = student.pupil.last_name
-            student_info["full_name"] = (
-                student.pupil.first_name + " " + student.pupil.last_name
-            )
+            student_info[
+                "full_name"
+            ] = f"{student.pupil.first_name} {student.pupil.last_name}"
             student_info["id"] = student.pupil.id
             student_info["class"] = ""  # student.class_.name
             student_info["school"] = student.school.name
@@ -104,11 +104,9 @@ async def get_latest_attendance(student_id):
             latest_attendance["lesson_name"] = attendance.subject.name
             latest_attendance["lesson_number"] = attendance.time.position
             latest_attendance["lesson_date"] = str(attendance.date.date)
-            latest_attendance["lesson_time"] = (
-                attendance.time.from_.strftime("%H:%M")
-                + "-"
-                + attendance.time.to.strftime("%H:%M")
-            )
+            latest_attendance[
+                "lesson_time"
+            ] = f"{attendance.time.from_.strftime('%H:%M')}-{attendance.time.to.strftime('%H:%M')}"
             latest_attendance["datetime"] = attendance.date_modified.date_time
 
     if latest_attendance == {}:
@@ -189,7 +187,7 @@ async def get_next_exam(student_id):
                 next_exam = {}
                 next_exam["description"] = exam.topic
                 if exam.topic == "":
-                    next_exam["description"] = exam.type + " " + exam.subject.name
+                    next_exam["description"] = f"{exam.type} {exam.subject.name}"
                 next_exam["subject"] = exam.subject.name
                 next_exam["type"] = exam.type
                 next_exam["teacher"] = exam.creator.display_name
@@ -209,32 +207,25 @@ async def get_next_exam(student_id):
     return next_exam
 
 
-def get_latest_message(self):
-    with open("vulcan.json") as f:
-        certificate = json.load(f)
-    self.latest_message = {}
-
-    for message in Vulcan(certificate).get_messages():
-        temp_dict = {}
-        temp_dict["title"] = message.title
-        temp_dict["content"] = message.content
+def get_latest_message():
+    for message in client.data.get_messages():
+        latest_message = {}
+        latest_message["title"] = message.title
+        latest_message["content"] = message.content
         if message.sender is not None:
-            temp_dict["sender"] = message.sender.name
+            latest_message["sender"] = message.sender.name
         else:
-            temp_dict["sender"] = "Nieznany"
-        temp_dict["date"] = (
-            message.sent_date.strftime("%Y.%m.%d")
-            + " "
-            + message.sent_time.strftime("%H:%M")
-        )
-        setattr(self, "latest_message", temp_dict)
+            latest_message["sender"] = "Nieznany"
+        latest_message[
+            "date"
+        ] = f"{message.sent_date.strftime('%Y.%m.%d')} {message.sent_time.strftime('%H:%M')}"
 
-    if self.latest_message == {}:
-        self.latest_message = {
+    if latest_message == {}:
+        latest_message = {
             "title": "-",
             "content": "-",
             "date": "-",
             "sender": "-",
         }
 
-    return self.latest_message
+    return latest_message

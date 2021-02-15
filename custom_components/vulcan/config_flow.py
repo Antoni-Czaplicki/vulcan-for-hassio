@@ -2,14 +2,15 @@ import logging
 import os
 
 import voluptuous as vol
+from vulcan import Account, Keystore, VulcanHebe
+
 from homeassistant import config_entries
 from homeassistant.core import callback
-from vulcan import Account, Keystore, VulcanHebe
 
 from . import DOMAIN, register
 
 _LOGGER = logging.getLogger(__name__)
-from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY
+from .const import CONF_ATTENDANCE_NOTIFY, CONF_GRADE_NOTIFY, CONF_MESSAGE_NOTIFY
 
 
 class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -23,7 +24,11 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """GUI > Configuration > Integrations > Plus > Uonet+ Vulcan for Home Assistant"""
         error = None
         regdata = None
-        if self._async_current_entries() and is_new_account == False:
+        if (
+            self._async_current_entries()
+            and is_new_account == False
+            and not hasattr(self, "is_new_account")
+        ):
             return await self.async_step_add_student()
 
         if user_input is not None:
@@ -44,12 +49,9 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(str(self._student.pupil.id))
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title=self._student.pupil.first_name
-                    + " "
-                    + self._student.pupil.last_name,
+                    title=f"{self._student.pupil.first_name} {self._student.pupil.last_name}",
                     data={
                         "student_id": str(self._student.pupil.id),
-                        "students_number": len(self._students),
                         "login": account.user_login,
                     },
                 )
@@ -72,10 +74,9 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         error = None
         students_list = {}
         for student in self._students:
-            students_list[str(student.pupil.id)] = (
-                student.pupil.first_name + " " + student.pupil.last_name
-            )
-
+            students_list[
+                str(student.pupil.id)
+            ] = f"{student.pupil.first_name} {student.pupil.last_name}"
         if user_input is not None:
             student_id = user_input["student"]
             await self.async_set_unique_id(str(student_id))
@@ -84,7 +85,6 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 title=students_list[student_id],
                 data={
                     "student_id": str(student_id),
-                    "students_number": len(students_list),
                     "login": self.account.user_login,
                 },
             )
@@ -125,12 +125,9 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(str(self._student.pupil.id))
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title=self._student.pupil.first_name
-                    + " "
-                    + self._student.pupil.last_name,
+                    title=f"{self._student.pupil.first_name} {self._student.pupil.last_name}",
                     data={
                         "student_id": str(self._student.pupil.id),
-                        "students_number": len(self._students),
                         "login": account.user_login,
                     },
                 )
@@ -171,6 +168,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     return await self.async_step_select_saved_credentials()
             else:
+                self.is_new_account = True
                 return await self.async_step_user(is_new_account=True)
 
         data_schema = {
@@ -197,9 +195,6 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 client = VulcanHebe(keystore, account)
                 students = await client.get_students()
                 await client.close()
-                students_number = 0
-                for _ in students:
-                    students_number += 1
                 for student in students:
                     for entry_id in self._async_current_ids():
                         if str(student.pupil.id) == str(entry_id):
@@ -212,7 +207,6 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                                 data={
                                     "login": account.user_login,
                                     "student_id": str(student.pupil.id),
-                                    "students_number": students_number,
                                 },
                             )
                             await self.hass.config_entries.async_reload(
@@ -250,12 +244,16 @@ class VulcanOptionsFlowHandler(config_entries.OptionsFlow):
 
         options = {
             vol.Optional(
-                CONF_NOTIFY,
-                default=self.config_entry.options.get(CONF_NOTIFY, False),
+                CONF_MESSAGE_NOTIFY,
+                default=self.config_entry.options.get(CONF_MESSAGE_NOTIFY, False),
             ): bool,
             vol.Optional(
                 CONF_ATTENDANCE_NOTIFY,
                 default=self.config_entry.options.get(CONF_ATTENDANCE_NOTIFY, False),
+            ): bool,
+            vol.Optional(
+                CONF_GRADE_NOTIFY,
+                default=self.config_entry.options.get(CONF_GRADE_NOTIFY, False),
             ): bool,
         }
 

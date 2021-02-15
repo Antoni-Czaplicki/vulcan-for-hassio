@@ -1,11 +1,12 @@
 # This Integration uses unofficial Vulcan-api https://github.com/kapi2289/vulcan-api
 import logging
 
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.typing import ConfigType
 from vulcan import Account, Keystore, VulcanHebe
 
-from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, DOMAIN
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.typing import ConfigType
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -13,7 +14,6 @@ client = None
 
 
 async def async_setup(hass, config) -> bool:
-    vulcan: Optional[ConfigType] = config.get(DOMAIN)
     hass.data.setdefault(DOMAIN, {})
 
     return True
@@ -22,9 +22,9 @@ async def async_setup(hass, config) -> bool:
 async def async_setup_entry(hass, config_entry):
     global client
     try:
-        with open(".vulcan/keystore-" + config_entry.data.get("login") + ".json") as f:
+        with open(f".vulcan/keystore-{config_entry.data.get('login')}.json") as f:
             keystore = Keystore.load(f)
-        with open(".vulcan/account-" + config_entry.data.get("login") + ".json") as f:
+        with open(f".vulcan/account-{config_entry.data.get('login')}.json") as f:
             account = Account.load(f)
         client = VulcanHebe(keystore, account)
         await client.select_student()
@@ -41,7 +41,10 @@ async def async_setup_entry(hass, config_entry):
             )
         )
         return False
-
+    num = 0
+    for _ in hass.config_entries.async_entries(DOMAIN):
+        num += 1
+    hass.data[DOMAIN]["students_number"] = num
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
     )

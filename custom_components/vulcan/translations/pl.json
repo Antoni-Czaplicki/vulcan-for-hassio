@@ -52,8 +52,9 @@
       "step":{
          "init":{
             "data":{
-               "notify":"Pokazuj powiadomienia o najnowszych wiadomościach",
-               "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji"
+               "message_notify":"Pokazuj powiadomienia o najnowszych wiadomościach (aktualnie niedostępne)",
+               "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
+               "grade_notify":"Pokazuj powiadomienia o najnowszych ocenach"
             }
          }
       }

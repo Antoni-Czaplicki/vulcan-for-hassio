@@ -1,11 +1,18 @@
 import datetime
 from datetime import timedelta
 
-from homeassistant.components import persistent_notification
 from vulcan import Vulcan
 
+from homeassistant.components import persistent_notification
+
 from . import DOMAIN, VulcanEntity
-from .const import CONF_ATTENDANCE_NOTIFY, CONF_NOTIFY, PARALLEL_UPDATES, SCAN_INTERVAL
+from .const import (
+    CONF_ATTENDANCE_NOTIFY,
+    CONF_GRADE_NOTIFY,
+    CONF_MESSAGE_NOTIFY,
+    PARALLEL_UPDATES,
+    SCAN_INTERVAL,
+)
 from .get_data import (
     get_latest_attendance,
     get_latest_grade,
@@ -19,14 +26,16 @@ from .get_data import (
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    hass.data[DOMAIN][CONF_NOTIFY] = config_entry.options.get(CONF_NOTIFY)
+    hass.data[DOMAIN][CONF_MESSAGE_NOTIFY] = config_entry.options.get(
+        CONF_MESSAGE_NOTIFY
+    )
+    hass.data[DOMAIN][CONF_GRADE_NOTIFY] = config_entry.options.get(CONF_GRADE_NOTIFY)
     hass.data[DOMAIN][CONF_ATTENDANCE_NOTIFY] = config_entry.options.get(
         CONF_ATTENDANCE_NOTIFY
     )
     hass.data[DOMAIN]["student_info"] = await get_student_info(
         config_entry.data.get("student_id")
     )
-    hass.data[DOMAIN]["students_number"] = config_entry.data.get("students_number")
     hass.data[DOMAIN]["lessons"] = await get_lesson_info(
         student_id=config_entry.data.get("student_id")
     )
@@ -83,8 +92,8 @@ class VulcanLessonEntity(VulcanEntity):
             name = ""
             self.device_student_name = ""
         else:
-            name = " - " + self.student_info["full_name"]
-            self.device_student_name = self.student_info["full_name"] + ": "
+            name = f" - {self.student_info['full_name']}"
+            self.device_student_name = f"{self.student_info['full_name']}: "
 
         self.number = str(number)
         if _tomorrow == True:
@@ -105,11 +114,11 @@ class VulcanLessonEntity(VulcanEntity):
         else:
             space = " "
 
-        self.lesson = hass.data[DOMAIN]["lessons" + tomorrow]["lesson_" + self.number]
+        self.lesson = hass.data[DOMAIN][f"lessons{tomorrow}"][f"lesson_{self.number}"]
         self._state = self.lesson["lesson"]
 
-        self._name = "Lesson" + space + self.number + name_tomorrow + name
-        self._unique_id = "lesson_" + tomorrow + self.number + "_" + self.student_id
+        self._name = f"Lesson{space}{self.number}{name_tomorrow}{name}"
+        self._unique_id = f"lesson_{tomorrow}{self.number}_{self.student_id}"
         self._icon = "mdi:timetable"
 
     @property
@@ -127,11 +136,11 @@ class VulcanLessonEntity(VulcanEntity):
     def device_info(self):
         return {
             "identifiers": {
-                (DOMAIN, self.tomorrow_device_id + "timetable_" + self.student_id)
+                (DOMAIN, f"{self.tomorrow_device_id}timetable_{self.student_id}")
             },
             "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": self.device_student_name + self.device_name_tomorrow + "Timetable",
+            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "name": f"{self.device_student_name}{self.device_name_tomorrow}Timetable",
             "entry_type": "service",
         }
 
@@ -146,7 +155,7 @@ class VulcanLessonEntity(VulcanEntity):
                 student_id=self.student_id,
                 date_from=datetime.date.today() + self.num_tomorrow,
             )
-        self.lesson = self.lesson_data["lesson_" + self.number]
+        self.lesson = self.lesson_data[f"lesson_{self.number}"]
         self._state = self.lesson["lesson"]
 
 
@@ -155,7 +164,7 @@ class LatestAttendance(VulcanEntity):
         self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_id = str(self.student_info["id"])
         self.latest_attendance = hass.data[DOMAIN]["attendance"]
-        self.att_notify = hass.data[DOMAIN][CONF_ATTENDANCE_NOTIFY]
+        self.notify = hass.data[DOMAIN][CONF_ATTENDANCE_NOTIFY]
         self.old_att = self.latest_attendance["datetime"]
         self._state = self.latest_attendance["content"]
 
@@ -163,10 +172,10 @@ class LatestAttendance(VulcanEntity):
             name = ""
             self.device_student_name = ""
         else:
-            name = " - " + self.student_info["full_name"]
-            self.device_student_name = self.student_info["full_name"] + ": "
-        self._name = "Latest Attendance" + name
-        self._unique_id = "attendance_latest_" + self.student_id
+            name = f" - {self.student_info['full_name']}"
+            self.device_student_name = f"{self.student_info['full_name']}: "
+        self._name = f"Latest Attendance{name}"
+        self._unique_id = f"attendance_latest_{self.student_id}"
         self._icon = "mdi:account-check-outline"
 
     @property
@@ -184,17 +193,17 @@ class LatestAttendance(VulcanEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "attendance" + self.student_id)},
+            "identifiers": {(DOMAIN, f"attendance{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": self.device_student_name + "Attendance",
+            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "name": f"{self.device_student_name}Attendance",
             "entry_type": "service",
         }
 
     async def async_update(self):
         self.latest_attendance = await get_latest_attendance(self.student_id)
         latest_attendance = self.latest_attendance
-        if self.att_notify == True:
+        if self.notify == True:
             if (
                 self.latest_attendance["content"] != "obecność"
                 and self.latest_attendance["content"] != "-"
@@ -202,13 +211,8 @@ class LatestAttendance(VulcanEntity):
             ):
                 persistent_notification.async_create(
                     self.hass,
-                    self.latest_attendance["lesson_time"]
-                    + ", "
-                    + self.latest_attendance["lesson_date"]
-                    + "\n"
-                    + self.latest_attendance["content"],
-                    "Vulcan: Nowy wpis frekwencji w "
-                    + self.latest_attendance["lesson_name"],
+                    f"{self.latest_attendance['lesson_time']}, {self.latest_attendance['lesson_date']}\n{self.latest_attendance['content']}",
+                    f"{self.device_student_name}Vulcan: Nowy wpis frekwencji na lekcji {self.latest_attendance['lesson_name']}",
                 )
                 self.old_att = self.latest_attendance["datetime"]
         self._state = latest_attendance["content"]
@@ -219,8 +223,8 @@ class LatestMessage(VulcanEntity):
         self.student_info = hass.data[DOMAIN]["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
-        self.latest_message = get_latest_message(self)
-        self.notify = hass.data[DOMAIN][CONF_NOTIFY]
+        self.latest_message = get_latest_message()
+        self.notify = hass.data[DOMAIN][CONF_MESSAGE_NOTIFY]
         self.old_msg = self.latest_message["content"]
         self._state = self.latest_message["title"]
 
@@ -228,10 +232,10 @@ class LatestMessage(VulcanEntity):
             name = ""
             self.device_student_name = ""
         else:
-            name = " - " + self.student_info["full_name"]
-            self.device_student_name = self.student_info["full_name"] + ": "
-        self._name = "Latest Message" + name
-        self._unique_id = "message_latest_" + self.student_id
+            name = f" - {self.student_info['full_name']}"
+            self.device_student_name = f"{self.student_info['full_name']}: "
+        self._name = f"Latest Message{name}"
+        self._unique_id = f"message_latest_{self.student_id}"
         self._icon = "mdi:message-arrow-left-outline"
 
     @property
@@ -248,26 +252,22 @@ class LatestMessage(VulcanEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "message" + self.student_id)},
+            "identifiers": {(DOMAIN, f"message{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": self.device_student_name + "Messages",
+            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "name": f"{self.device_student_name}Messages",
             "entry_type": "service",
         }
 
     def update(self):
-        self.latest_message = get_latest_message(self)
+        self.latest_message = get_latest_message()
         message_latest = self.latest_message
         if self.notify == True:
             if self.old_msg != self.latest_message["content"]:
                 persistent_notification.async_create(
                     self.hass,
-                    self.latest_message["sender"]
-                    + ", "
-                    + self.latest_message["date"]
-                    + "\n"
-                    + self.latest_message["content"],
-                    "Vulcan: " + self.latest_message["title"],
+                    f"{self.latest_message['sender']}, {self.latest_message['date']}\n{self.latest_message['content']}",
+                    f"Vulcan: {self.latest_message['title']}",
                 )
                 self.old_msg = self.latest_message["content"]
         self._state = message_latest["title"]
@@ -279,16 +279,18 @@ class LatestGrade(VulcanEntity):
         self.latest_grade = hass.data[DOMAIN]["grade"]
         self._state = self.latest_grade["content"]
         self.student_id = str(self.student_info["id"])
+        self.notify = hass.data[DOMAIN][CONF_GRADE_NOTIFY]
+        self.old_state = f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
 
         if hass.data[DOMAIN]["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:
-            name = " - " + self.student_info["full_name"]
-            self.device_student_name = self.student_info["full_name"] + ": "
+            name = f" - {self.student_info['full_name']}"
+            self.device_student_name = f"{self.student_info['full_name']}: "
 
-        self._name = "Latest grade" + name
-        self._unique_id = "grade_latest_" + self.student_id
+        self._name = f"Latest grade{name}"
+        self._unique_id = f"grade_latest_{self.student_id}"
         self._icon = "mdi:school-outline"
 
     @property
@@ -306,15 +308,27 @@ class LatestGrade(VulcanEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "grade" + self.student_id)},
+            "identifiers": {(DOMAIN, f"grade{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": self.device_student_name + "Grades",
+            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "name": f"{self.device_student_name}Grades",
             "entry_type": "service",
         }
 
     async def async_update(self):
         self.latest_grade = await get_latest_grade(self.student_id)
+        if self.notify == True:
+            if (
+                self.latest_grade["content"] != "-"
+                and self.old_state
+                != f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
+            ):
+                persistent_notification.async_create(
+                    self.hass,
+                    f"Nowa ocena {self.latest_grade['content']} z {self.latest_grade['subject']} została wystawiona {self.latest_grade['date']} przez {self.latest_grade['teacher']}.",
+                    f"{self.device_student_name}Vulcan: Nowa ocena z {self.latest_grade['subject']}: {self.latest_grade['content']}",
+                )
+                self.old_state = f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
         self._state = self.latest_grade["content"]
 
 
@@ -330,11 +344,11 @@ class NextHomework(VulcanEntity):
             name = ""
             self.device_student_name = ""
         else:
-            name = " - " + self.student_info["full_name"]
-            self.device_student_name = self.student_info["full_name"] + ": "
+            name = f" - {self.student_info['full_name']}"
+            self.device_student_name = f"{self.student_info['full_name']}: "
 
-        self._name = "Next Homework" + name
-        self._unique_id = "homework_next_" + self.student_id
+        self._name = f"Next Homework{name}"
+        self._unique_id = f"homework_next_{self.student_id}"
         self._icon = "mdi:pen"
 
     @property
@@ -349,10 +363,10 @@ class NextHomework(VulcanEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "homework" + self.student_id)},
+            "identifiers": {(DOMAIN, f"homework{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": self.device_student_name + "Homeworks",
+            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "name": f"{self.device_student_name}Homeworks",
             "entry_type": "service",
         }
 
@@ -373,11 +387,11 @@ class NextExam(VulcanEntity):
             name = ""
             self.device_student_name = ""
         else:
-            name = " - " + self.student_info["full_name"]
-            self.device_student_name = self.student_info["full_name"] + ": "
+            name = f" - {self.student_info['full_name']}"
+            self.device_student_name = f"{self.student_info['full_name']}: "
 
-        self._name = "Next Exam" + name
-        self._unique_id = "exam_next_" + self.student_id
+        self._name = f"Next Exam{name}"
+        self._unique_id = f"exam_next_{self.student_id}"
         self._icon = "mdi:format-list-checks"
 
     @property
@@ -393,10 +407,10 @@ class NextExam(VulcanEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "exam" + self.student_id)},
+            "identifiers": {(DOMAIN, f"exam{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": self.device_student_name + "Exam",
+            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "name": f"{self.device_student_name}Exam",
             "entry_type": "service",
         }
 
@@ -417,11 +431,11 @@ class LuckyNumber(VulcanEntity):
             name = ""
             self.device_student_name = ""
         else:
-            name = " - " + self.student_info["full_name"]
-            self.device_student_name = self.student_info["full_name"] + ": "
+            name = f" - {self.student_info['full_name']}"
+            self.device_student_name = f"{self.student_info['full_name']}: "
 
-        self._name = "Lucky Number" + name
-        self._unique_id = "lucky_number_" + self.student_id
+        self._name = f"Lucky Number{name}"
+        self._unique_id = f"lucky_number_{self.student_id}"
         self._icon = "mdi:ticket-confirmation-outline"
 
     @property
@@ -434,10 +448,10 @@ class LuckyNumber(VulcanEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, "lucky_number" + self.student_id)},
+            "identifiers": {(DOMAIN, f"lucky_number{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": self.student_info["class"] + " " + self.student_info["school"],
-            "name": self.device_student_name + "Lucky Number",
+            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "name": f"{self.device_student_name}Lucky Number",
             "entry_type": "service",
         }
 
