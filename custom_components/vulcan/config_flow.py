@@ -2,10 +2,9 @@ import logging
 import os
 
 import voluptuous as vol
-from vulcan import Account, Keystore, VulcanHebe
-
 from homeassistant import config_entries
 from homeassistant.core import callback
+from vulcan import Account, Keystore, VulcanHebe
 
 from . import DOMAIN, register
 
