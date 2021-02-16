@@ -200,7 +200,10 @@ class LatestAttendance(VulcanEntity):
         }
 
     async def async_update(self):
-        self.latest_attendance = await get_latest_attendance(self.student_id)
+        try:
+            self.latest_attendance = await get_latest_attendance(self.student_id)
+        except:
+            self.latest_attendance = await get_latest_attendance(self.student_id)
         latest_attendance = self.latest_attendance
         if self.notify == True:
             if (
@@ -259,7 +262,10 @@ class LatestMessage(VulcanEntity):
         }
 
     def update(self):
-        self.latest_message = get_latest_message()
+        try:
+            self.latest_message = get_latest_message()
+        except:
+            self.latest_message = get_latest_message()
         message_latest = self.latest_message
         if self.notify == True:
             if self.old_msg != self.latest_message["content"]:
@@ -315,7 +321,10 @@ class LatestGrade(VulcanEntity):
         }
 
     async def async_update(self):
-        self.latest_grade = await get_latest_grade(self.student_id)
+        try:
+            self.latest_grade = await get_latest_grade(self.student_id)
+        except:
+            self.latest_grade = await get_latest_grade(self.student_id)
         if self.notify == True:
             if (
                 self.latest_grade["content"] != "-"
@@ -370,7 +379,10 @@ class NextHomework(VulcanEntity):
         }
 
     async def async_update(self):
-        self.next_homework = await get_next_homework(self.student_id)
+        try:
+            self.next_homework = await get_next_homework(self.student_id)
+        except:
+            self.next_homework = await get_next_homework(self.student_id)
         self._state = self.next_homework["description"]
 
 
@@ -414,7 +426,10 @@ class NextExam(VulcanEntity):
         }
 
     async def async_update(self):
-        self.next_exam = await get_next_exam(self.student_id)
+        try:
+            self.next_exam = await get_next_exam(self.student_id)
+        except:
+            self.next_exam = await get_next_exam(self.student_id)
         self._state = self.next_exam["description"]
 
 
@@ -455,5 +470,8 @@ class LuckyNumber(VulcanEntity):
         }
 
     async def async_update(self):
-        self.lucky_number = await get_lucky_number()
+        try:
+            self.lucky_number = await get_lucky_number()
+        except:
+            self.lucky_number = await get_lucky_number()
         self._state = self.lucky_number["number"]
