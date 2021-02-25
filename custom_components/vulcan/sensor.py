@@ -2,7 +2,6 @@ import datetime
 from datetime import timedelta
 
 from homeassistant.components import persistent_notification
-from vulcan import Vulcan
 
 from . import DOMAIN, VulcanEntity
 from .const import (

@@ -4,7 +4,7 @@ import os
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from vulcan import Account, Keystore, VulcanHebe
+from vulcan import Account, Keystore, Vulcan
 
 from . import DOMAIN, register
 
@@ -37,7 +37,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if not error:
                 account = regdata["account"]
                 keystore = regdata["keystore"]
-                client = VulcanHebe(keystore, account)
+                client = Vulcan(keystore, account)
                 self._students = await client.get_students()
                 await client.close()
 
@@ -116,7 +116,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             with open(user_input["credentials"]) as f:
                 account = Account.load(f)
             self.account = account
-            client = VulcanHebe(keystore, account)
+            client = Vulcan(keystore, account)
             self._students = await client.get_students()
             await client.close()
             if len(self._students) == 1:
@@ -158,7 +158,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                             with open(os.path.join(".vulcan", file)) as f:
                                 account = Account.load(f)
                     self.account = account
-                    client = VulcanHebe(keystore, account)
+                    client = Vulcan(keystore, account)
                     self._students = await client.get_students()
                     await client.close()
                     if len(self._students) == 1:
@@ -191,7 +191,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if not error:
                 account = regdata["account"]
                 keystore = regdata["keystore"]
-                client = VulcanHebe(keystore, account)
+                client = Vulcan(keystore, account)
                 students = await client.get_students()
                 await client.close()
                 for student in students:

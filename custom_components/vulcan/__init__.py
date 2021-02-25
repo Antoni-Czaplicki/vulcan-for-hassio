@@ -3,7 +3,7 @@ import logging
 
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import ConfigType
-from vulcan import Account, Keystore, VulcanHebe
+from vulcan import Account, Keystore, Vulcan
 
 from .const import DOMAIN
 
@@ -25,7 +25,7 @@ async def async_setup_entry(hass, config_entry):
             keystore = Keystore.load(f)
         with open(f".vulcan/account-{config_entry.data.get('login')}.json") as f:
             account = Account.load(f)
-        client = VulcanHebe(keystore, account)
+        client = Vulcan(keystore, account)
         await client.select_student()
         students = await client.get_students()
         for student in students:

@@ -6,7 +6,6 @@ from datetime import timedelta
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform, service
 from homeassistant.helpers.entity import Entity
-from vulcan import Account, Keystore, Vulcan, VulcanHebe
 
 from . import DOMAIN, client
 
