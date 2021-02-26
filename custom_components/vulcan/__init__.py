@@ -3,6 +3,7 @@ import logging
 
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import ConfigType
+
 from vulcan import Account, Keystore, Vulcan
 
 from .const import DOMAIN

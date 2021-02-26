@@ -126,7 +126,7 @@ class VulcanLessonEntity(VulcanEntity):
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
             "time": lesson_info["time"],
-            "changes": lesson_info["changes"],
+            # "changes": lesson_info["changes"],
         }
         return atr
 

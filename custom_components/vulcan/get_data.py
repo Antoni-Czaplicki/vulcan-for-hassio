@@ -31,19 +31,19 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
         temp_dict[
             "time"
         ] = f"{Lesson.time.from_.strftime('%H:%M')}-{Lesson.time.to.strftime('%H:%M')}"
-        if temp_dict["changes"] == None:
-            temp_dict["changes"] = ""
-        if "przeniesiona na lekcję" in temp_dict["changes"]:
-            temp_dict["lesson"] = f"Lekcja przeniesiona ({temp_dict['lesson']})"
-        elif "przeniesiona z lekcji" in temp_dict["changes"]:
-            temp_dict["lesson"] = f"{temp_dict['lesson']} {temp_dict['changes']}"
-        elif (
-            "odwołana" in temp_dict["changes"]
-            or "Okienko" in temp_dict["changes"]
-            or "nieobecność" in temp_dict["changes"]
-            or "okienko" in temp_dict["changes"]
-        ):
-            temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
+        # if temp_dict["changes"] == None:
+        # temp_dict["changes"] = ""
+        # if "przeniesiona na lekcję" in temp_dict["changes"]:
+        # temp_dict["lesson"] = f"Lekcja przeniesiona ({temp_dict['lesson']})"
+        # elif "przeniesiona z lekcji" in temp_dict["changes"]:
+        # temp_dict["lesson"] = f"{temp_dict['lesson']} {temp_dict['changes']}"
+        # elif (
+        # "odwołana" in temp_dict["changes"]
+        # or "Okienko" in temp_dict["changes"]
+        # or "nieobecność" in temp_dict["changes"]
+        # or "okienko" in temp_dict["changes"]
+        # ):
+        # temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
         if temp_dict["visible"] == True:
             if type_ == "dict":
                 dict_ans[f"lesson_{lesson}"] = temp_dict
