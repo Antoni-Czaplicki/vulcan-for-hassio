@@ -1,11 +1,11 @@
 # Uonet+ Vulcan integration for Home Assistant
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=vulcan)  
 View your vulcan data as Home Assistant sensors and use it in automations. You can add multiple students by adding integration again.
 
 ## Get started
-To get started login as mobile app in Integrations page. In integration options you can select student and enable notifications. Actually only one student is supported.   
+If you already installed integration you can add it to home assistant by clicking [this link](https://my.home-assistant.io/redirect/config_flow_start/?domain=vulcan) (only v2021.3.0 with enabled ["my"](https://www.home-assistant.io/integrations/my/) integration) or add it manually this integrations page, then login as mobile app in Integrations page. In integration options you can select student and enable notifications. Actually only one student is supported.   
 You can easily add sensors to the lovelace interface using the "Add to Lovelace UI" option in the device page.
 ![image](docs/images/dashboard.png)
 
