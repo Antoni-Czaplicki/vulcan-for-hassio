@@ -1,10 +1,10 @@
 # This Integration uses unofficial Vulcan-api https://github.com/kapi2289/vulcan-api
 import logging
 
+from vulcan import Account, Keystore, Vulcan
+
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import ConfigType
-
-from vulcan import Account, Keystore, Vulcan
 
 from .const import DOMAIN
 
@@ -47,6 +47,9 @@ async def async_setup_entry(hass, config_entry):
     hass.data[DOMAIN]["students_number"] = num
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
+    )
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(config_entry, "calendar")
     )
     return True
 

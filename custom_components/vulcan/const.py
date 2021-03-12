@@ -1,8 +1,9 @@
 """Constants for the Vulcan integration."""
 from datetime import timedelta
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+
+import homeassistant.helpers.config_validation as cv
 
 DOMAIN = "vulcan"
 CONF_MESSAGE_NOTIFY = "message_notify"

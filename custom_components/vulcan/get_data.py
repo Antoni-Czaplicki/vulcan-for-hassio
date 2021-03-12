@@ -1,10 +1,9 @@
 import asyncio
 import datetime
-import json
 from datetime import timedelta
+import json
 
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_platform, service
+from homeassistant.helpers import config_validation as cv, entity_platform, service
 from homeassistant.helpers.entity import Entity
 
 from . import DOMAIN, client
@@ -12,14 +11,45 @@ from . import DOMAIN, client
 
 async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"):
     dict_ans = {}
+    changes = {}
     list_ans = []
+    async for Lesson in await client.data.get_changed_lessons(
+        date_from=date_from, date_to=date_to
+    ):
+        temp_dict = {}
+        id = str(Lesson.id)
+        temp_dict["id"] = Lesson.id
+        temp_dict["number"] = Lesson.time.position if Lesson.time is not None else None
+        temp_dict["lesson"] = (
+            Lesson.subject.name if Lesson.subject is not None else None
+        )
+        temp_dict["room"] = Lesson.room.code if Lesson.room is not None else None
+        temp_dict["changes"] = Lesson.changes
+        temp_dict["note"] = Lesson.note
+        temp_dict["reason"] = Lesson.reason
+        temp_dict["event"] = Lesson.event
+        temp_dict["group"] = Lesson.group
+        temp_dict["teacher"] = (
+            Lesson.teacher.display_name if Lesson.teacher is not None else None
+        )
+        temp_dict["from_to"] = (
+            Lesson.time.displayed_time if Lesson.time is not None else None
+        )
+
+        changes[str(id)] = temp_dict
+
     async for Lesson in await client.data.get_lessons(
         date_from=date_from, date_to=date_to
     ):
         temp_dict = {}
+        temp_dict["id"] = Lesson.id
         temp_dict["number"] = Lesson.time.position
+        temp_dict["time"] = Lesson.time
+        temp_dict["date"] = Lesson.date.date
         lesson = str(Lesson.time.position)
-        temp_dict["lesson"] = Lesson.subject.name
+        temp_dict["lesson"] = (
+            Lesson.subject.name if Lesson.subject is not None else None
+        )
         if Lesson.room is not None:
             temp_dict["room"] = Lesson.room.code
         else:
@@ -27,40 +57,48 @@ async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"
         temp_dict["visible"] = Lesson.visible
         temp_dict["changes"] = Lesson.changes
         temp_dict["group"] = Lesson.group
-        temp_dict["teacher"] = Lesson.teacher.display_name
-        temp_dict[
-            "time"
-        ] = f"{Lesson.time.from_.strftime('%H:%M')}-{Lesson.time.to.strftime('%H:%M')}"
-        # if temp_dict["changes"] == None:
-        # temp_dict["changes"] = ""
-        # if "przeniesiona na lekcję" in temp_dict["changes"]:
+        temp_dict["reason"] = None
+        temp_dict["teacher"] = (
+            Lesson.teacher.display_name if Lesson.teacher is not None else None
+        )
+        temp_dict["from_to"] = (
+            Lesson.time.displayed_time if Lesson.time is not None else None
+        )
+        if temp_dict["changes"] == None:
+            temp_dict["changes"] = ""
+        elif temp_dict["changes"].type == 1:
+            temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
+            temp_dict["changes_info"] = f"Lekcja odwołana ({temp_dict['lesson']})"
+            temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
+        elif temp_dict["changes"].type == 2:
+            temp_dict["lesson"] = f"{temp_dict['lesson']} (Zastępstwo)"
+            temp_dict["teacher"] = changes[str(temp_dict["changes"].id)]["teacher"]
+            temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
+        # elif temp_dict["changes"].type == 3:
         # temp_dict["lesson"] = f"Lekcja przeniesiona ({temp_dict['lesson']})"
-        # elif "przeniesiona z lekcji" in temp_dict["changes"]:
-        # temp_dict["lesson"] = f"{temp_dict['lesson']} {temp_dict['changes']}"
-        # elif (
-        # "odwołana" in temp_dict["changes"]
-        # or "Okienko" in temp_dict["changes"]
-        # or "nieobecność" in temp_dict["changes"]
-        # or "okienko" in temp_dict["changes"]
-        # ):
-        # temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
+        # temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
+        elif temp_dict["changes"].type == 4:
+            temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
+            temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
         if temp_dict["visible"] == True:
             if type_ == "dict":
                 dict_ans[f"lesson_{lesson}"] = temp_dict
             elif type_ == "list":
                 list_ans.append(temp_dict)
 
-    for num in range(10):
-        if not f"lesson_{str(num + 1)}" in dict_ans:
-            dict_ans[f"lesson_{str(num + 1)}"] = {
-                "number": num + 1,
-                "lesson": "-",
-                "room": "-",
-                "group": "-",
-                "teacher": "-",
-                "time": "-",
-                "changes": "-",
-            }
+    if type_ == "dict":
+        for num in range(10):
+            if not f"lesson_{str(num + 1)}" in dict_ans:
+                dict_ans[f"lesson_{str(num + 1)}"] = {
+                    "number": num + 1,
+                    "lesson": "-",
+                    "room": "-",
+                    "group": "-",
+                    "teacher": "-",
+                    "from_to": "-",
+                    "changes": "-",
+                    "reason": None,
+                }
     if type_ == "dict":
         return dict_ans
     elif type_ == "list":
