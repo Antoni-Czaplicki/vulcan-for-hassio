@@ -1,0 +1,33 @@
+name: Check lint
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install black
+        run: pip install black
+
+      - name: Check black
+        run: black --check .
+
+      - name: Install isort
+        run: pip install isort
+
+      - name: Check isort
+        run: isort --profile black .
