@@ -1,4 +1,7 @@
 {
     "name": "Uonet+ Vulcan",
+	"country": "PL",
+	"domains": ["sensor", "calendar"],
+	"iot_class": "Cloud Polling",
     "render_readme": true
 }
