@@ -2,7 +2,7 @@
 import logging
 
 from vulcan import Account, Keystore, Vulcan
-
+import asyncio
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import ConfigType
 
@@ -11,7 +11,7 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 client = None
-
+PLATFORMS = ["sensor", "calendar"]
 
 async def async_setup(hass, config) -> bool:
     hass.data.setdefault(DOMAIN, {})
@@ -45,6 +45,10 @@ async def async_setup_entry(hass, config_entry):
     for _ in hass.config_entries.async_entries(DOMAIN):
         num += 1
     hass.data[DOMAIN]["students_number"] = num
+    
+    if not config_entry.update_listeners:
+        update_listener = config_entry.add_update_listener(_async_update_options)
+    
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
     )
@@ -52,7 +56,19 @@ async def async_setup_entry(hass, config_entry):
         hass.config_entries.async_forward_entry_setup(config_entry, "calendar")
     )
     return True
+    
+async def async_unload_entry(hass, entry):
+    """Unload a config entry."""
+    for platform in PLATFORMS:
+        await hass.config_entries.async_forward_entry_unload(entry, platform)
 
+    return True
+
+    
+    
+async def _async_update_options(hass, entry):
+    """Update options."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 class VulcanEntity(Entity):
     @property

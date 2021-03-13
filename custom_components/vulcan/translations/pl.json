@@ -54,7 +54,8 @@
             "data":{
                "message_notify":"Pokazuj powiadomienia o najnowszych wiadomościach (aktualnie niedostępne)",
                "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
-               "grade_notify":"Pokazuj powiadomienia o najnowszych ocenach"
+               "grade_notify":"Pokazuj powiadomienia o najnowszych ocenach",
+               "scan_interval":"Częstotliwość aktualizacji (w minutach)"
             }
          }
       }

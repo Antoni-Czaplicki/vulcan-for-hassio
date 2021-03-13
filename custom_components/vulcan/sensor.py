@@ -2,14 +2,14 @@ import datetime
 from datetime import timedelta
 
 from homeassistant.components import persistent_notification
-
+from homeassistant.const import CONF_SCAN_INTERVAL
 from . import DOMAIN, VulcanEntity
 from .const import (
     CONF_ATTENDANCE_NOTIFY,
     CONF_GRADE_NOTIFY,
     CONF_MESSAGE_NOTIFY,
     PARALLEL_UPDATES,
-    SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
 )
 from .get_data import (
     get_latest_attendance,
@@ -22,8 +22,11 @@ from .get_data import (
     get_student_info,
 )
 
+SCAN_INTERVAL = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
+    global SCAN_INTERVAL
+    SCAN_INTERVAL = timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL)) if config_entry.options.get(CONF_SCAN_INTERVAL) is not None else SCAN_INTERVAL
     hass.data[DOMAIN][CONF_MESSAGE_NOTIFY] = config_entry.options.get(
         CONF_MESSAGE_NOTIFY
     )
@@ -228,7 +231,7 @@ class LatestMessage(VulcanEntity):
         self.latest_message = get_latest_message()
         self.notify = hass.data[DOMAIN][CONF_MESSAGE_NOTIFY]
         self.old_msg = self.latest_message["content"]
-        self._state = self.latest_message["title"]
+        self._state = self.latest_message["title"][0:250]
 
         if hass.data[DOMAIN]["students_number"] == 1:
             name = ""
@@ -275,7 +278,7 @@ class LatestMessage(VulcanEntity):
                     f"Vulcan: {self.latest_message['title']}",
                 )
                 self.old_msg = self.latest_message["content"]
-        self._state = message_latest["title"]
+        self._state = message_latest["title"][0:250]
 
 
 class LatestGrade(VulcanEntity):
@@ -346,7 +349,7 @@ class NextHomework(VulcanEntity):
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
         self.next_homework = hass.data[DOMAIN]["homework"]
-        self._state = self.next_homework["description"]
+        self._state = self.next_homework["description"][0:250]
 
         if hass.data[DOMAIN]["students_number"] == 1:
             name = ""
@@ -383,7 +386,7 @@ class NextHomework(VulcanEntity):
             self.next_homework = await get_next_homework(self.student_id)
         except:
             self.next_homework = await get_next_homework(self.student_id)
-        self._state = self.next_homework["description"]
+        self._state = self.next_homework["description"][0:250]
 
 
 class NextExam(VulcanEntity):
@@ -392,7 +395,7 @@ class NextExam(VulcanEntity):
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
         self.next_exam = hass.data[DOMAIN]["exam"]
-        self._state = self.next_exam["description"]
+        self._state = self.next_exam["description"][0:250]
 
         if hass.data[DOMAIN]["students_number"] == 1:
             name = ""
@@ -430,7 +433,7 @@ class NextExam(VulcanEntity):
             self.next_exam = await get_next_exam(self.student_id)
         except:
             self.next_exam = await get_next_exam(self.student_id)
-        self._state = self.next_exam["description"]
+        self._state = self.next_exam["description"][0:250]
 
 
 class LuckyNumber(VulcanEntity):

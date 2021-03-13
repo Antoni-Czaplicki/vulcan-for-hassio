@@ -54,7 +54,8 @@
             "data":{
                "message_notify":"Show notifications when new message received (currently not available)",
                "attendance_notify":"Show notifications about the latest attendance entries",
-               "grade_notify":"Show notifications about the latest grades"
+               "grade_notify":"Show notifications about the latest grades",
+               "scan_interval":"Update interval (in minutes)"
             }
          }
       }
