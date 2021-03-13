@@ -184,8 +184,14 @@ class VulcanCalendarData:
             )
             if events == []:
                 self.event = None
-                return 
-        new_event=min(events, key=lambda d: (datetime.combine(d["date"], d["time"].from_)<datetime.now(), abs(datetime.combine(d["date"], d["time"].from_) - datetime.now())))
+                return
+        new_event = min(
+            events,
+            key=lambda d: (
+                datetime.combine(d["date"], d["time"].from_) < datetime.now(),
+                abs(datetime.combine(d["date"], d["time"].from_) - datetime.now()),
+            ),
+        )
         self.event = {
             "uid": new_event["id"],
             "date": new_event["date"],
