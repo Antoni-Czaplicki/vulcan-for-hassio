@@ -3,13 +3,14 @@ from datetime import timedelta
 
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_SCAN_INTERVAL
+
 from . import DOMAIN, VulcanEntity
 from .const import (
     CONF_ATTENDANCE_NOTIFY,
     CONF_GRADE_NOTIFY,
     CONF_MESSAGE_NOTIFY,
-    PARALLEL_UPDATES,
     DEFAULT_SCAN_INTERVAL,
+    PARALLEL_UPDATES,
 )
 from .get_data import (
     get_latest_attendance,
@@ -24,9 +25,14 @@ from .get_data import (
 
 SCAN_INTERVAL = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     global SCAN_INTERVAL
-    SCAN_INTERVAL = timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL)) if config_entry.options.get(CONF_SCAN_INTERVAL) is not None else SCAN_INTERVAL
+    SCAN_INTERVAL = (
+        timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL))
+        if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
+        else SCAN_INTERVAL
+    )
     hass.data[DOMAIN][CONF_MESSAGE_NOTIFY] = config_entry.options.get(
         CONF_MESSAGE_NOTIFY
     )

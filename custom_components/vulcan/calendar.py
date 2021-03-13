@@ -1,6 +1,6 @@
 """Support for Vulcan Calendar Search binary sensors."""
 import copy
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 import logging
 
 from homeassistant.components.calendar import (
@@ -8,7 +8,12 @@ from homeassistant.components.calendar import (
     CalendarEventDevice,
     get_date,
 )
-from homeassistant.const import CONF_DEVICE_ID, CONF_ENTITIES, CONF_NAME, CONF_SCAN_INTERVAL
+from homeassistant.const import (
+    CONF_DEVICE_ID,
+    CONF_ENTITIES,
+    CONF_NAME,
+    CONF_SCAN_INTERVAL,
+)
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.template import DATE_STR_FORMAT
 from homeassistant.util import Throttle, dt
@@ -35,7 +40,11 @@ from .get_data import (
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the calendar platform for event devices."""
     global MIN_TIME_BETWEEN_UPDATES
-    MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL)) if config_entry.options.get(CONF_SCAN_INTERVAL) is not None else MIN_TIME_BETWEEN_UPDATES
+    MIN_TIME_BETWEEN_UPDATES = (
+        timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL))
+        if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
+        else MIN_TIME_BETWEEN_UPDATES
+    )
     student_info = await get_student_info(config_entry.data.get("student_id"))
     async_add_entities(
         [
@@ -168,7 +177,11 @@ class VulcanCalendarData:
 
         events = await get_lesson_info(student_id=self.student_info["id"], type_="list")
         if events == []:
-            events = await get_lesson_info(student_id=self.student_info["id"], date_to=date.today() + timedelta(days=7), type_="list")
+            events = await get_lesson_info(
+                student_id=self.student_info["id"],
+                date_to=date.today() + timedelta(days=7),
+                type_="list",
+            )
         new_event = None
         for item in events:
             item["start_date"] = datetime.combine(item["date"], item["time"].from_)

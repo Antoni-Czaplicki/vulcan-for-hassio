@@ -5,14 +5,19 @@ import voluptuous as vol
 from vulcan import Account, Keystore, Vulcan
 
 from homeassistant import config_entries
-from homeassistant.core import callback
 from homeassistant.const import CONF_SCAN_INTERVAL
+from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 
 from . import DOMAIN, register
 
 _LOGGER = logging.getLogger(__name__)
-from .const import CONF_ATTENDANCE_NOTIFY, CONF_GRADE_NOTIFY, CONF_MESSAGE_NOTIFY, DEFAULT_SCAN_INTERVAL
+from .const import (
+    CONF_ATTENDANCE_NOTIFY,
+    CONF_GRADE_NOTIFY,
+    CONF_MESSAGE_NOTIFY,
+    DEFAULT_SCAN_INTERVAL,
+)
 
 
 class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -259,7 +264,9 @@ class VulcanOptionsFlowHandler(config_entries.OptionsFlow):
             ): bool,
             vol.Optional(
                 CONF_SCAN_INTERVAL,
-                default=self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+                default=self.config_entry.options.get(
+                    CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                ),
             ): cv.positive_int,
         }
 
