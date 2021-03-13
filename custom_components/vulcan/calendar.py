@@ -182,11 +182,10 @@ class VulcanCalendarData:
                 date_to=date.today() + timedelta(days=7),
                 type_="list",
             )
-        new_event = None
-        for item in events:
-            item["start_date"] = datetime.combine(item["date"], item["time"].from_)
-            new_event = item
-            break
+            if events == []:
+                self.event = None
+                return 
+        new_event=min(events, key=lambda d: (datetime.combine(d["date"], d["time"].from_)<datetime.now(), abs(datetime.combine(d["date"], d["time"].from_) - datetime.now())))
         self.event = {
             "uid": new_event["id"],
             "date": new_event["date"],
