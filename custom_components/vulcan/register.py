@@ -1,10 +1,8 @@
+"""Support for register Vulcan account."""
 from functools import partial
-import json
 from pathlib import Path
 
 from vulcan import Account, Keystore
-
-from . import DOMAIN
 
 
 async def register(hass, token, symbol, pin):

@@ -13,7 +13,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     PARALLEL_UPDATES,
 )
-from .get_data import (
+from .fetch_data import (
     get_latest_attendance,
     get_latest_grade,
     get_latest_message,
@@ -34,16 +34,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
         else SCAN_INTERVAL
     )
-    hass.data[DOMAIN]["student_info"] = await get_student_info(
-        config_entry.data.get("student_id")
-    )
-    hass.data[DOMAIN]["lessons"] = await get_lesson_info()
-    hass.data[DOMAIN]["lessons_t"] = await get_lesson_info(
-        date_from=datetime.date.today() + timedelta(days=1),
-    )
     data = {
         "student_info": await get_student_info(config_entry.data.get("student_id")),
         "students_number": hass.data[DOMAIN]["students_number"],
+        "lessons": await get_lesson_info(),
+        "lessons_t": await get_lesson_info(
+            date_from=datetime.date.today() + timedelta(days=1)
+        ),
         "grade": await get_latest_grade(),
         "lucky_number": await get_lucky_number(),
         "attendance": await get_latest_attendance(),
@@ -55,41 +52,28 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             CONF_ATTENDANCE_NOTIFY: config_entry.options.get(CONF_ATTENDANCE_NOTIFY),
         },
     }
-    async_add_entities([VulcanLessonEntity(hass, 1)])
-    async_add_entities([VulcanLessonEntity(hass, 2)])
-    async_add_entities([VulcanLessonEntity(hass, 3)])
-    async_add_entities([VulcanLessonEntity(hass, 4)])
-    async_add_entities([VulcanLessonEntity(hass, 5)])
-    async_add_entities([VulcanLessonEntity(hass, 6)])
-    async_add_entities([VulcanLessonEntity(hass, 7)])
-    async_add_entities([VulcanLessonEntity(hass, 8)])
-    async_add_entities([VulcanLessonEntity(hass, 9)])
-    async_add_entities([VulcanLessonEntity(hass, 10)])
-    async_add_entities([LatestGrade(data)])
-    # async_add_entities([LatestMessage(data)])
-    async_add_entities([LatestAttendance(data)])
-    async_add_entities([LuckyNumber(data)])
-    async_add_entities([NextHomework(data)])
-    async_add_entities([NextExam(data)])
-    async_add_entities([VulcanLessonEntity(hass, 1, True)])
-    async_add_entities([VulcanLessonEntity(hass, 2, True)])
-    async_add_entities([VulcanLessonEntity(hass, 3, True)])
-    async_add_entities([VulcanLessonEntity(hass, 4, True)])
-    async_add_entities([VulcanLessonEntity(hass, 5, True)])
-    async_add_entities([VulcanLessonEntity(hass, 6, True)])
-    async_add_entities([VulcanLessonEntity(hass, 7, True)])
-    async_add_entities([VulcanLessonEntity(hass, 8, True)])
-    async_add_entities([VulcanLessonEntity(hass, 9, True)])
-    async_add_entities([VulcanLessonEntity(hass, 10, True)])
+    entities = [
+        LatestGrade(data),
+        LuckyNumber(data),
+        LatestAttendance(data),
+        NextHomework(data),
+        NextExam(data),
+    ]
+    for i in range(10):
+        entities.append(VulcanLessonEntity(data, i + 1))
+    for i in range(10):
+        entities.append(VulcanLessonEntity(data, i + 1, True))
+
+    async_add_entities(entities)
 
 
 class VulcanLessonEntity(VulcanEntity):
-    def __init__(self, hass, number, _tomorrow=False):
-        self.student_info = hass.data[DOMAIN]["student_info"]
+    def __init__(self, data, number, _tomorrow=False):
+        self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:
@@ -115,7 +99,7 @@ class VulcanLessonEntity(VulcanEntity):
         else:
             space = " "
 
-        self.lesson = hass.data[DOMAIN][f"lessons{tomorrow}"][f"lesson_{self.number}"]
+        self.lesson = data[f"lessons{tomorrow}"][f"lesson_{self.number}"]
         self._state = self.lesson["lesson"]
 
         self._name = f"Lesson{space}{self.number}{name_tomorrow}{name}"

@@ -25,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
 
-from .get_data import (
+from .fetch_data import (
     get_latest_attendance,
     get_latest_grade,
     get_latest_message,

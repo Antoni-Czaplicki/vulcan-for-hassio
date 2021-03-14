@@ -1,3 +1,4 @@
+"""Adds config flow for Vulcan."""
 import logging
 import os
 
@@ -9,7 +10,8 @@ from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 
-from . import DOMAIN, register
+from . import DOMAIN
+from .register import register
 
 _LOGGER = logging.getLogger(__name__)
 from .const import (
@@ -39,7 +41,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return await self.async_step_add_student()
 
         if user_input is not None:
-            regdata = await register.register(
+            regdata = await register(
                 self.hass, user_input["token"], user_input["symbol"], user_input["pin"]
             )
             if not error:
@@ -193,7 +195,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         error = None
         regdata = None
         if user_input is not None:
-            regdata = await register.register(
+            regdata = await register(
                 self.hass, user_input["token"], user_input["symbol"], user_input["pin"]
             )
             if not error:

@@ -1,13 +1,8 @@
 """Support for fetching Vulcan data."""
-import asyncio
 import datetime
 from datetime import timedelta
-import json
 
-from homeassistant.helpers import config_validation as cv, entity_platform, service
-from homeassistant.helpers.entity import Entity
-
-from . import DOMAIN, client
+from . import client
 
 
 async def get_lesson_info(date_from=None, date_to=None, type_="dict"):
