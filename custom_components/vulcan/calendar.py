@@ -1,4 +1,4 @@
-"""Support for Vulcan Calendar Search binary sensors."""
+"""Support for Vulcan Calendar."""
 import copy
 from datetime import date, datetime, timedelta
 import logging
@@ -45,15 +45,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
         else MIN_TIME_BETWEEN_UPDATES
     )
-    student_info = await get_student_info(config_entry.data.get("student_id"))
+    data = {
+        "student_info": await get_student_info(config_entry.data.get("student_id")),
+        "students_number": hass.data[DOMAIN]["students_number"],
+    }
     async_add_entities(
         [
             VulcanCalendarEventDevice(
-                hass,
-                student_info,
+                data,
                 generate_entity_id(
                     ENTITY_ID_FORMAT,
-                    f"vulcan_calendar_{student_info['full_name']}",
+                    f"vulcan_calendar_{data['student_info']['full_name']}",
                     hass=hass,
                 ),
             )
@@ -64,22 +66,22 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class VulcanCalendarEventDevice(CalendarEventDevice):
     """A calendar event device."""
 
-    def __init__(self, hass, student_info, entity_id):
+    def __init__(self, data, entity_id):
         """Create the Calendar event device."""
-        self.student_info = student_info
+        self.student_info = data["student_info"]
         self.data = VulcanCalendarData(
-            student_info,
+            self.student_info,
         )
         self._event = None
         self.entity_id = entity_id
-        self._unique_id = f"vulcan_calendar_{student_info['id']}"
+        self._unique_id = f"vulcan_calendar_{self.student_info['id']}"
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_name = "Calendar"
         else:
-            name = f" - {student_info['full_name']}"
-            self.device_name = f"{student_info['full_name']}: Calendar"
+            name = f" - {self.student_info['full_name']}"
+            self.device_name = f"{self.student_info['full_name']}: Calendar"
         self._name = f"Vulcan calendar{name}"
 
     @property
@@ -142,7 +144,6 @@ class VulcanCalendarData:
         """Get all events in a specific time frame."""
 
         events = await get_lesson_info(
-            student_id=self.student_info["id"],
             date_from=start_date,
             date_to=end_date,
             type_="list",
@@ -175,10 +176,9 @@ class VulcanCalendarData:
     async def async_update(self):
         """Get the latest data."""
 
-        events = await get_lesson_info(student_id=self.student_info["id"], type_="list")
+        events = await get_lesson_info(type_="list")
         if events == []:
             events = await get_lesson_info(
-                student_id=self.student_info["id"],
                 date_to=date.today() + timedelta(days=7),
                 type_="list",
             )
@@ -188,8 +188,8 @@ class VulcanCalendarData:
         new_event = min(
             events,
             key=lambda d: (
-                datetime.combine(d["date"], d["time"].from_) < datetime.now(),
-                abs(datetime.combine(d["date"], d["time"].from_) - datetime.now()),
+                datetime.combine(d["date"], d["time"].to) < datetime.now(),
+                abs(datetime.combine(d["date"], d["time"].to) - datetime.now()),
             ),
         )
         self.event = {

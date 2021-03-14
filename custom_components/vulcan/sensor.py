@@ -1,3 +1,4 @@
+"""Support for Vulcan sensors."""
 import datetime
 from datetime import timedelta
 
@@ -33,34 +34,27 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
         else SCAN_INTERVAL
     )
-    hass.data[DOMAIN][CONF_MESSAGE_NOTIFY] = config_entry.options.get(
-        CONF_MESSAGE_NOTIFY
-    )
-    hass.data[DOMAIN][CONF_GRADE_NOTIFY] = config_entry.options.get(CONF_GRADE_NOTIFY)
-    hass.data[DOMAIN][CONF_ATTENDANCE_NOTIFY] = config_entry.options.get(
-        CONF_ATTENDANCE_NOTIFY
-    )
     hass.data[DOMAIN]["student_info"] = await get_student_info(
         config_entry.data.get("student_id")
     )
-    hass.data[DOMAIN]["lessons"] = await get_lesson_info(
-        student_id=config_entry.data.get("student_id")
-    )
+    hass.data[DOMAIN]["lessons"] = await get_lesson_info()
     hass.data[DOMAIN]["lessons_t"] = await get_lesson_info(
-        student_id=config_entry.data.get("student_id"),
         date_from=datetime.date.today() + timedelta(days=1),
     )
-    hass.data[DOMAIN]["grade"] = await get_latest_grade(
-        config_entry.data.get("student_id")
-    )
-    hass.data[DOMAIN]["lucky_number"] = await get_lucky_number()
-    hass.data[DOMAIN]["attendance"] = await get_latest_attendance(
-        config_entry.data.get("student_id")
-    )
-    hass.data[DOMAIN]["homework"] = await get_next_homework(
-        config_entry.data.get("student_id")
-    )
-    hass.data[DOMAIN]["exam"] = await get_next_exam(config_entry.data.get("student_id"))
+    data = {
+        "student_info": await get_student_info(config_entry.data.get("student_id")),
+        "students_number": hass.data[DOMAIN]["students_number"],
+        "grade": await get_latest_grade(),
+        "lucky_number": await get_lucky_number(),
+        "attendance": await get_latest_attendance(),
+        "homework": await get_next_homework(),
+        "exam": await get_next_exam(),
+        "notify": {
+            CONF_MESSAGE_NOTIFY: config_entry.options.get(CONF_MESSAGE_NOTIFY),
+            CONF_GRADE_NOTIFY: config_entry.options.get(CONF_GRADE_NOTIFY),
+            CONF_ATTENDANCE_NOTIFY: config_entry.options.get(CONF_ATTENDANCE_NOTIFY),
+        },
+    }
     async_add_entities([VulcanLessonEntity(hass, 1)])
     async_add_entities([VulcanLessonEntity(hass, 2)])
     async_add_entities([VulcanLessonEntity(hass, 3)])
@@ -71,12 +65,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities([VulcanLessonEntity(hass, 8)])
     async_add_entities([VulcanLessonEntity(hass, 9)])
     async_add_entities([VulcanLessonEntity(hass, 10)])
-    async_add_entities([LatestGrade(hass)])
-    # async_add_entities([LatestMessage(hass)])
-    async_add_entities([LatestAttendance(hass)])
-    async_add_entities([LuckyNumber(hass)])
-    async_add_entities([NextHomework(hass)])
-    async_add_entities([NextExam(hass)])
+    async_add_entities([LatestGrade(data)])
+    # async_add_entities([LatestMessage(data)])
+    async_add_entities([LatestAttendance(data)])
+    async_add_entities([LuckyNumber(data)])
+    async_add_entities([NextHomework(data)])
+    async_add_entities([NextExam(data)])
     async_add_entities([VulcanLessonEntity(hass, 1, True)])
     async_add_entities([VulcanLessonEntity(hass, 2, True)])
     async_add_entities([VulcanLessonEntity(hass, 3, True)])
@@ -155,12 +149,10 @@ class VulcanLessonEntity(VulcanEntity):
     async def async_update(self):
         try:
             self.lesson_data = await get_lesson_info(
-                student_id=self.student_id,
                 date_from=datetime.date.today() + self.num_tomorrow,
             )
         except:
             self.lesson_data = await get_lesson_info(
-                student_id=self.student_id,
                 date_from=datetime.date.today() + self.num_tomorrow,
             )
         self.lesson = self.lesson_data[f"lesson_{self.number}"]
@@ -168,15 +160,15 @@ class VulcanLessonEntity(VulcanEntity):
 
 
 class LatestAttendance(VulcanEntity):
-    def __init__(self, hass):
-        self.student_info = hass.data[DOMAIN]["student_info"]
+    def __init__(self, data):
+        self.student_info = data["student_info"]
         self.student_id = str(self.student_info["id"])
-        self.latest_attendance = hass.data[DOMAIN]["attendance"]
-        self.notify = hass.data[DOMAIN][CONF_ATTENDANCE_NOTIFY]
+        self.latest_attendance = data["attendance"]
+        self.notify = data["notify"][CONF_ATTENDANCE_NOTIFY]
         self.old_att = self.latest_attendance["datetime"]
         self._state = self.latest_attendance["content"]
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:
@@ -210,9 +202,9 @@ class LatestAttendance(VulcanEntity):
 
     async def async_update(self):
         try:
-            self.latest_attendance = await get_latest_attendance(self.student_id)
+            self.latest_attendance = await get_latest_attendance()
         except:
-            self.latest_attendance = await get_latest_attendance(self.student_id)
+            self.latest_attendance = await get_latest_attendance()
         latest_attendance = self.latest_attendance
         if self.notify == True:
             if (
@@ -230,16 +222,16 @@ class LatestAttendance(VulcanEntity):
 
 
 class LatestMessage(VulcanEntity):
-    def __init__(self, hass):
-        self.student_info = hass.data[DOMAIN]["student_info"]
+    def __init__(self, data):
+        self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
         self.latest_message = get_latest_message()
-        self.notify = hass.data[DOMAIN][CONF_MESSAGE_NOTIFY]
+        self.notify = data["notify"][CONF_MESSAGE_NOTIFY]
         self.old_msg = self.latest_message["content"]
         self._state = self.latest_message["title"][0:250]
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:
@@ -288,15 +280,15 @@ class LatestMessage(VulcanEntity):
 
 
 class LatestGrade(VulcanEntity):
-    def __init__(self, hass):
-        self.student_info = hass.data[DOMAIN]["student_info"]
-        self.latest_grade = hass.data[DOMAIN]["grade"]
+    def __init__(self, data):
+        self.student_info = data["student_info"]
+        self.latest_grade = data["grade"]
         self._state = self.latest_grade["content"]
         self.student_id = str(self.student_info["id"])
-        self.notify = hass.data[DOMAIN][CONF_GRADE_NOTIFY]
+        self.notify = data["notify"][CONF_GRADE_NOTIFY]
         self.old_state = f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:
@@ -331,9 +323,9 @@ class LatestGrade(VulcanEntity):
 
     async def async_update(self):
         try:
-            self.latest_grade = await get_latest_grade(self.student_id)
+            self.latest_grade = await get_latest_grade()
         except:
-            self.latest_grade = await get_latest_grade(self.student_id)
+            self.latest_grade = await get_latest_grade()
         if self.notify == True:
             if (
                 self.latest_grade["content"] != "-"
@@ -350,14 +342,14 @@ class LatestGrade(VulcanEntity):
 
 
 class NextHomework(VulcanEntity):
-    def __init__(self, hass):
-        self.student_info = hass.data[DOMAIN]["student_info"]
+    def __init__(self, data):
+        self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
-        self.next_homework = hass.data[DOMAIN]["homework"]
+        self.next_homework = data["homework"]
         self._state = self.next_homework["description"][0:250]
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:
@@ -389,21 +381,21 @@ class NextHomework(VulcanEntity):
 
     async def async_update(self):
         try:
-            self.next_homework = await get_next_homework(self.student_id)
+            self.next_homework = await get_next_homework()
         except:
-            self.next_homework = await get_next_homework(self.student_id)
+            self.next_homework = await get_next_homework()
         self._state = self.next_homework["description"][0:250]
 
 
 class NextExam(VulcanEntity):
-    def __init__(self, hass):
-        self.student_info = hass.data[DOMAIN]["student_info"]
+    def __init__(self, data):
+        self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
-        self.next_exam = hass.data[DOMAIN]["exam"]
+        self.next_exam = data["exam"]
         self._state = self.next_exam["description"][0:250]
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:
@@ -436,21 +428,21 @@ class NextExam(VulcanEntity):
 
     async def async_update(self):
         try:
-            self.next_exam = await get_next_exam(self.student_id)
+            self.next_exam = await get_next_exam()
         except:
-            self.next_exam = await get_next_exam(self.student_id)
+            self.next_exam = await get_next_exam()
         self._state = self.next_exam["description"][0:250]
 
 
 class LuckyNumber(VulcanEntity):
-    def __init__(self, hass):
-        self.student_info = hass.data[DOMAIN]["student_info"]
+    def __init__(self, data):
+        self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
-        self.lucky_number = hass.data[DOMAIN]["lucky_number"]
+        self.lucky_number = data["lucky_number"]
         self._state = self.lucky_number["number"]
 
-        if hass.data[DOMAIN]["students_number"] == 1:
+        if data["students_number"] == 1:
             name = ""
             self.device_student_name = ""
         else:

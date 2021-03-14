@@ -1,3 +1,4 @@
+from functools import partial
 import json
 from pathlib import Path
 
@@ -6,9 +7,11 @@ from vulcan import Account, Keystore
 from . import DOMAIN
 
 
-async def register(token, symbol, pin):
+async def register(hass, token, symbol, pin):
     Path(".vulcan").mkdir(parents=True, exist_ok=True)
-    keystore = Keystore.create(device_model="Home Assistant")
+    keystore = await hass.async_add_executor_job(
+        partial(Keystore.create, device_model="Home Assistant")
+    )
     account = await Account.register(keystore, token, symbol, pin)
     with open(f".vulcan/keystore-{account.user_login}.json", "w") as f:
         f.write(keystore.as_json)

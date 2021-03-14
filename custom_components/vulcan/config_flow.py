@@ -40,7 +40,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             regdata = await register.register(
-                user_input["token"], user_input["symbol"], user_input["pin"]
+                self.hass, user_input["token"], user_input["symbol"], user_input["pin"]
             )
             if not error:
                 account = regdata["account"]
@@ -194,7 +194,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         regdata = None
         if user_input is not None:
             regdata = await register.register(
-                user_input["token"], user_input["symbol"], user_input["pin"]
+                self.hass, user_input["token"], user_input["symbol"], user_input["pin"]
             )
             if not error:
                 account = regdata["account"]

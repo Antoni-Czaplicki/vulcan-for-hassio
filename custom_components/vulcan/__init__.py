@@ -1,4 +1,4 @@
-# This Integration uses unofficial Vulcan-api https://github.com/kapi2289/vulcan-api
+"""The Vulcan component."""
 import asyncio
 import logging
 

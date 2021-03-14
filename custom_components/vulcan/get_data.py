@@ -1,3 +1,4 @@
+"""Support for fetching Vulcan data."""
 import asyncio
 import datetime
 from datetime import timedelta
@@ -9,7 +10,7 @@ from homeassistant.helpers.entity import Entity
 from . import DOMAIN, client
 
 
-async def get_lesson_info(student_id, date_from=None, date_to=None, type_="dict"):
+async def get_lesson_info(date_from=None, date_to=None, type_="dict"):
     dict_ans = {}
     changes = {}
     list_ans = []
@@ -133,7 +134,7 @@ async def get_lucky_number():
     return lucky_number
 
 
-async def get_latest_attendance(student_id):
+async def get_latest_attendance():
     latest_attendance = {}
     async for attendance in await client.data.get_attendance():
         if attendance.presence_type != None:
@@ -159,7 +160,7 @@ async def get_latest_attendance(student_id):
     return latest_attendance
 
 
-async def get_latest_grade(student_id):
+async def get_latest_grade():
     latest_grade = {}
 
     async for grade in await client.data.get_grades():
@@ -186,7 +187,7 @@ async def get_latest_grade(student_id):
     return latest_grade
 
 
-async def get_next_homework(student_id):
+async def get_next_homework():
     next_homework = {}
     async for homework in await client.data.get_homework():
         for i in range(7):
@@ -213,7 +214,7 @@ async def get_next_homework(student_id):
     return next_homework
 
 
-async def get_next_exam(student_id):
+async def get_next_exam():
     next_exam = {}
     async for exam in await client.data.get_exams():
         for i in range(7):
