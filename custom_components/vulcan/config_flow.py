@@ -47,6 +47,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if not error:
                 account = regdata["account"]
                 keystore = regdata["keystore"]
+                self.account = account
                 client = Vulcan(keystore, account)
                 self._students = await client.get_students()
                 await client.close()
