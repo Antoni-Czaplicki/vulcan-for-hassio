@@ -5,7 +5,7 @@ from datetime import timedelta
 from . import client
 
 
-async def get_lesson_info(date_from=None, date_to=None, type_="dict"):
+async def get_lesson_info(client=client, date_from=None, date_to=None, type_="dict"):
     dict_ans = {}
     changes = {}
     list_ans = []
@@ -101,7 +101,7 @@ async def get_lesson_info(date_from=None, date_to=None, type_="dict"):
         return list_ans
 
 
-async def get_student_info(student_id):
+async def get_student_info(client=client, student_id):
     student_info = {}
     for student in await client.get_students():
         if str(student.pupil.id) == str(student_id):
@@ -118,7 +118,7 @@ async def get_student_info(student_id):
     return student_info
 
 
-async def get_lucky_number():
+async def get_lucky_number(client=client):
     lucky_number = {}
     number = await client.data.get_lucky_number()
     try:
@@ -129,7 +129,7 @@ async def get_lucky_number():
     return lucky_number
 
 
-async def get_latest_attendance():
+async def get_latest_attendance(client=client):
     latest_attendance = {}
     async for attendance in await client.data.get_attendance():
         if attendance.presence_type != None:
@@ -182,7 +182,7 @@ async def get_latest_grade():
     return latest_grade
 
 
-async def get_next_homework():
+async def get_next_homework(client=client):
     next_homework = {}
     async for homework in await client.data.get_homework():
         for i in range(7):
@@ -209,7 +209,7 @@ async def get_next_homework():
     return next_homework
 
 
-async def get_next_exam():
+async def get_next_exam(client=client):
     next_exam = {}
     async for exam in await client.data.get_exams():
         for i in range(7):
@@ -240,7 +240,7 @@ async def get_next_exam():
     return next_exam
 
 
-def get_latest_message():
+def get_latest_message(client=client):
     for message in client.data.get_messages():
         latest_message = {}
         latest_message["title"] = message.title
