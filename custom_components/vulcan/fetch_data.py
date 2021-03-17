@@ -101,7 +101,7 @@ async def get_lesson_info(client=client, date_from=None, date_to=None, type_="di
         return list_ans
 
 
-async def get_student_info(client=client, student_id):
+async def get_student_info(student_id, client=client):
     student_info = {}
     for student in await client.get_students():
         if str(student.pupil.id) == str(student_id):
