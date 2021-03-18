@@ -3,8 +3,6 @@ import copy
 from datetime import date, datetime, timedelta
 import logging
 
-from vulcan import Account, Keystore, Vulcan
-
 from homeassistant.components.calendar import (
     ENTITY_ID_FORMAT,
     CalendarEventDevice,
@@ -20,7 +18,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.template import DATE_STR_FORMAT
 from homeassistant.util import Throttle, dt
 
-from . import DOMAIN
+from . import DOMAIN, client
 from .const import DEFAULT_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,6 +33,7 @@ from .fetch_data import (
     get_lucky_number,
     get_next_exam,
     get_next_homework,
+    get_student_by_id,
     get_student_info,
 )
 
@@ -42,29 +41,6 @@ from .fetch_data import (
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the calendar platform for event devices."""
     global MIN_TIME_BETWEEN_UPDATES
-    try:
-        with open(f".vulcan/keystore-{config_entry.data.get('login')}.json") as f:
-            keystore = Keystore.load(f)
-        with open(f".vulcan/account-{config_entry.data.get('login')}.json") as f:
-            account = Account.load(f)
-        client = Vulcan(keystore, account)
-        await client.select_student()
-        students = await client.get_students()
-        for student in students:
-            if student.pupil.id == config_entry.data.get("student_id"):
-                client.student = student
-                break
-    except:
-        hass.async_create_task(
-            hass.config_entries.flow.async_init(
-                DOMAIN,
-                context={"source": "reauth"},
-            )
-        )
-        return False
-    students_number = 0
-    for _ in hass.config_entries.async_entries(DOMAIN):
-        students_number += 1
     MIN_TIME_BETWEEN_UPDATES = (
         timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL))
         if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
@@ -72,18 +48,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     )
     data = {
         "student_info": await get_student_info(config_entry.data.get("student_id")),
-        "students_number": students_number,
+        "students_number": hass.data[DOMAIN]["students_number"],
     }
     async_add_entities(
         [
             VulcanCalendarEventDevice(
                 data,
-                client,
                 generate_entity_id(
                     ENTITY_ID_FORMAT,
                     f"vulcan_calendar_{data['student_info']['full_name']}",
                     hass=hass,
                 ),
+                await get_student_by_id(config_entry.data.get("student_id")),
             )
         ],
     )
@@ -92,12 +68,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class VulcanCalendarEventDevice(CalendarEventDevice):
     """A calendar event device."""
 
-    def __init__(self, data, client, entity_id):
+    def __init__(self, data, entity_id, student):
         """Create the Calendar event device."""
         self.student_info = data["student_info"]
         self.data = VulcanCalendarData(
-            client,
             self.student_info,
+            student,
         )
         self._event = None
         self.entity_id = entity_id
@@ -162,17 +138,17 @@ class VulcanCalendarEventDevice(CalendarEventDevice):
 class VulcanCalendarData:
     """Class to utilize calendar service object to get next event."""
 
-    def __init__(self, client, student_info):
+    def __init__(self, student_info, student):
         """Set up how we are going to search the Vulcan calendar."""
-        self.client = client
         self.student_info = student_info
+        self.student = student
         self.event = None
 
     async def async_get_events(self, hass, start_date, end_date):
         """Get all events in a specific time frame."""
 
         events = await get_lesson_info(
-            client=self.client,
+            student=self.student,
             date_from=start_date,
             date_to=end_date,
             type_="list",
@@ -205,10 +181,10 @@ class VulcanCalendarData:
     async def async_update(self):
         """Get the latest data."""
 
-        events = await get_lesson_info(client=self.client, type_="list")
+        events = await get_lesson_info(student=self.student, type_="list")
         if events == []:
             events = await get_lesson_info(
-                client=self.client,
+                student=self.student,
                 date_to=date.today() + timedelta(days=7),
                 type_="list",
             )

@@ -21,6 +21,7 @@ from .fetch_data import (
     get_lucky_number,
     get_next_exam,
     get_next_homework,
+    get_student_by_id,
     get_student_info,
 )
 
@@ -34,12 +35,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
         else SCAN_INTERVAL
     )
+    student = await get_student_by_id(config_entry.data.get("student_id"))
     data = {
         "student_info": await get_student_info(config_entry.data.get("student_id")),
         "students_number": hass.data[DOMAIN]["students_number"],
-        "lessons": await get_lesson_info(),
+        "lessons": await get_lesson_info(student=student),
         "lessons_t": await get_lesson_info(
-            date_from=datetime.date.today() + timedelta(days=1)
+            student=student, date_from=datetime.date.today() + timedelta(days=1)
         ),
         "grade": await get_latest_grade(),
         "lucky_number": await get_lucky_number(),
@@ -53,23 +55,24 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         },
     }
     entities = [
-        LatestGrade(data),
-        LuckyNumber(data),
-        LatestAttendance(data),
-        NextHomework(data),
-        NextExam(data),
+        LatestGrade(data, student),
+        LuckyNumber(data, student),
+        LatestAttendance(data, student),
+        NextHomework(data, student),
+        NextExam(data, student),
     ]
     for i in range(10):
-        entities.append(VulcanLessonEntity(data, i + 1))
+        entities.append(VulcanLessonEntity(data, i + 1, student))
     for i in range(10):
-        entities.append(VulcanLessonEntity(data, i + 1, True))
+        entities.append(VulcanLessonEntity(data, i + 1, student, True))
 
     async_add_entities(entities)
 
 
 class VulcanLessonEntity(VulcanEntity):
-    def __init__(self, data, number, _tomorrow=False):
+    def __init__(self, data, number, student, _tomorrow=False):
         self.student_info = data["student_info"]
+        self.student = student
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
 
@@ -133,10 +136,12 @@ class VulcanLessonEntity(VulcanEntity):
     async def async_update(self):
         try:
             self.lesson_data = await get_lesson_info(
+                student=self.student,
                 date_from=datetime.date.today() + self.num_tomorrow,
             )
         except:
             self.lesson_data = await get_lesson_info(
+                student=self.student,
                 date_from=datetime.date.today() + self.num_tomorrow,
             )
         self.lesson = self.lesson_data[f"lesson_{self.number}"]
@@ -144,7 +149,7 @@ class VulcanLessonEntity(VulcanEntity):
 
 
 class LatestAttendance(VulcanEntity):
-    def __init__(self, data):
+    def __init__(self, data, student):
         self.student_info = data["student_info"]
         self.student_id = str(self.student_info["id"])
         self.latest_attendance = data["attendance"]
@@ -206,7 +211,7 @@ class LatestAttendance(VulcanEntity):
 
 
 class LatestMessage(VulcanEntity):
-    def __init__(self, data):
+    def __init__(self, data, student):
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
@@ -264,7 +269,7 @@ class LatestMessage(VulcanEntity):
 
 
 class LatestGrade(VulcanEntity):
-    def __init__(self, data):
+    def __init__(self, data, student):
         self.student_info = data["student_info"]
         self.latest_grade = data["grade"]
         self._state = self.latest_grade["content"]
@@ -326,7 +331,7 @@ class LatestGrade(VulcanEntity):
 
 
 class NextHomework(VulcanEntity):
-    def __init__(self, data):
+    def __init__(self, data, student):
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
@@ -372,7 +377,7 @@ class NextHomework(VulcanEntity):
 
 
 class NextExam(VulcanEntity):
-    def __init__(self, data):
+    def __init__(self, data, student):
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
@@ -419,7 +424,7 @@ class NextExam(VulcanEntity):
 
 
 class LuckyNumber(VulcanEntity):
-    def __init__(self, data):
+    def __init__(self, data, student):
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
