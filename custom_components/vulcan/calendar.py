@@ -45,13 +45,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
         else MIN_TIME_BETWEEN_UPDATES
     )
+    client = hass.data[DOMAIN][config_entry.entry_id]
     data = {
-        "student_info": await get_student_info(config_entry.data.get("student_id")),
+        "student_info": await get_student_info(
+            client, config_entry.data.get("student_id")
+        ),
         "students_number": hass.data[DOMAIN]["students_number"],
     }
     async_add_entities(
         [
             VulcanCalendarEventDevice(
+                client,
                 data,
                 generate_entity_id(
                     ENTITY_ID_FORMAT,
@@ -66,10 +70,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class VulcanCalendarEventDevice(CalendarEventDevice):
     """A calendar event device."""
 
-    def __init__(self, data, entity_id):
+    def __init__(self, client, data, entity_id):
         """Create the Calendar event device."""
         self.student_info = data["student_info"]
         self.data = VulcanCalendarData(
+            client,
             self.student_info,
         )
         self._event = None
@@ -135,8 +140,9 @@ class VulcanCalendarEventDevice(CalendarEventDevice):
 class VulcanCalendarData:
     """Class to utilize calendar service object to get next event."""
 
-    def __init__(self, student_info):
+    def __init__(self, client, student_info):
         """Set up how we are going to search the Vulcan calendar."""
+        self.client = client
         self.student_info = student_info
         self.event = None
 
@@ -144,6 +150,7 @@ class VulcanCalendarData:
         """Get all events in a specific time frame."""
 
         events = await get_lesson_info(
+            self.client,
             date_from=start_date,
             date_to=end_date,
             type_="list",
@@ -176,9 +183,10 @@ class VulcanCalendarData:
     async def async_update(self):
         """Get the latest data."""
 
-        events = await get_lesson_info(type_="list")
+        events = await get_lesson_info(self.client, type_="list")
         if events == []:
             events = await get_lesson_info(
+                self.client,
                 date_to=date.today() + timedelta(days=7),
                 type_="list",
             )

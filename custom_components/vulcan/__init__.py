@@ -11,7 +11,6 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-client = None
 PLATFORMS = ["sensor", "calendar"]
 
 
@@ -22,7 +21,6 @@ async def async_setup(hass, config) -> bool:
 
 
 async def async_setup_entry(hass, config_entry):
-    global client
     try:
         with open(f".vulcan/keystore-{config_entry.data.get('login')}.json") as f:
             keystore = Keystore.load(f)
@@ -47,6 +45,7 @@ async def async_setup_entry(hass, config_entry):
     for _ in hass.config_entries.async_entries(DOMAIN):
         num += 1
     hass.data[DOMAIN]["students_number"] = num
+    hass.data[DOMAIN][config_entry.entry_id] = client
 
     if not config_entry.update_listeners:
         update_listener = config_entry.add_update_listener(_async_update_options)
