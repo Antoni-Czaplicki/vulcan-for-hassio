@@ -30,7 +30,7 @@ async def async_setup_entry(hass, config_entry):
         await client.select_student()
         students = await client.get_students()
         for student in students:
-            if student.pupil.id == config_entry.data.get("student_id"):
+            if str(student.pupil.id) == str(config_entry.data.get("student_id")):
                 client.student = student
                 break
     except:
