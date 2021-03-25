@@ -267,13 +267,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="reauth",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("token"): str,
-                    vol.Required("symbol"): str,
-                    vol.Required("pin"): str,
-                }
-            ),
+            data_schema=vol.Schema(LOGIN_SCHEMA),
             errors=errors,
         )
 
