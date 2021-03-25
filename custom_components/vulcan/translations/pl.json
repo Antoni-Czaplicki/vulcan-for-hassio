@@ -6,7 +6,11 @@
 		 "reauth_successful":"Zalogowano pomyślnie"
       },
       "error":{
-         "text":"{error_text}"
+		 "unknown":"Wystąpił nieoczekiwany błąd - sprawdź logi po więcej szczegółów",
+		 "invalid_token":"Niepoprawny token",
+		 "expired_token":"Token utracił ważność - prosimy wygenerować nowy token",
+		 "invalid_pin":"Niepoprawny pin",
+		 "invalid_symbol":"Niepoprawny symbol"
       },
       "step":{
          "user":{

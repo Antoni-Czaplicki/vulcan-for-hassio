@@ -6,7 +6,11 @@
          "reauth_successful":"Reauth successful"
       },
       "error":{
-         "text":"{error_text}"
+		 "unknown":"[%key:common::config_flow::error::unknown%]",
+		 "invalid_token": "Invalid token",
+		 "expired_token": "Expired token - please generate a new token",
+		 "invalid_pin": "Invalid pin",
+		 "invalid_symbol": "Invalid symbol"
       },
       "step":{
          "user":{

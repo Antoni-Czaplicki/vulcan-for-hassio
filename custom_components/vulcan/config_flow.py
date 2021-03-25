@@ -4,6 +4,7 @@ import os
 
 import voluptuous as vol
 from vulcan import Account, Keystore, Vulcan
+from vulcan._utils import VulcanAPIException
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_SCAN_INTERVAL
@@ -21,6 +22,12 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
 )
 
+LOGIN_SCHEMA = {
+    vol.Required("token"): str,
+    vol.Required("symbol"): str,
+    vol.Required("pin"): str,
+}
+
 
 class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
@@ -31,8 +38,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None, is_new_account=False):
         """GUI > Configuration > Integrations > Plus > Uonet+ Vulcan for Home Assistant"""
-        error = None
-        regdata = None
+        errors = {}
         if (
             self._async_current_entries()
             and is_new_account == False
@@ -41,12 +47,34 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return await self.async_step_add_student()
 
         if user_input is not None:
-            regdata = await register(
-                self.hass, user_input["token"], user_input["symbol"], user_input["pin"]
-            )
-            if not error:
-                account = regdata["account"]
-                keystore = regdata["keystore"]
+            try:
+                credentials = await register(
+                    self.hass,
+                    user_input["token"],
+                    user_input["symbol"],
+                    user_input["pin"],
+                )
+            except VulcanAPIException as err:
+                if str(err) == "Invalid token!":
+                    errors["base"] = "invalid_token"
+                else:
+                    errors["base"] = "unknown"
+                    _LOGGER.error(err)
+            except RuntimeError as err:
+                if str(err) == "Żądany byt `Token` nie został odnaleziony":
+                    errors["base"] = "invalid_token"
+                elif str(err) == "Token nieaktywny - prosimy wygenerować nowy token":
+                    errors["base"] = "expired_token"
+                elif str(err) == "Zły PIN - spróbuj ponownie.":
+                    errors["base"] = "invalid_pin"
+                elif str(err) == "Internal Server Error (ArgumentException)":
+                    errors["base"] = "invalid_symbol"
+                else:
+                    errors["base"] = "unknown"
+                    _LOGGER.error(err)
+            if errors == {}:
+                account = credentials["account"]
+                keystore = credentials["keystore"]
                 self.account = account
                 client = Vulcan(keystore, account)
                 self._students = await client.get_students()
@@ -68,16 +96,8 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("token"): str,
-                    vol.Required("symbol"): str,
-                    vol.Required("pin"): str,
-                }
-            ),
-            description_placeholders={
-                "error_text": "\nERROR: " + regdata if regdata else ""
-            },
+            data_schema=vol.Schema(LOGIN_SCHEMA),
+            errors=errors,
         )
 
     async def async_step_select_student(self, user_input=None):
@@ -193,15 +213,36 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reauth(self, user_input=None):
-        error = None
-        regdata = None
+        errors = {}
         if user_input is not None:
-            regdata = await register(
-                self.hass, user_input["token"], user_input["symbol"], user_input["pin"]
-            )
-            if not error:
-                account = regdata["account"]
-                keystore = regdata["keystore"]
+            try:
+                credentials = await register(
+                    self.hass,
+                    user_input["token"],
+                    user_input["symbol"],
+                    user_input["pin"],
+                )
+            except VulcanAPIException as err:
+                if str(err) == "Invalid token!":
+                    errors["base"] = "invalid_token"
+                else:
+                    errors["base"] = "unknown"
+                    _LOGGER.error(err)
+            except RuntimeError as err:
+                if str(err) == "Żądany byt `Token` nie został odnaleziony":
+                    errors["base"] = "invalid_token"
+                elif str(err) == "Token nieaktywny - prosimy wygenerować nowy token":
+                    errors["base"] = "expired_token"
+                elif str(err) == "Zły PIN - spróbuj ponownie.":
+                    errors["base"] = "invalid_pin"
+                elif str(err) == "Internal Server Error (ArgumentException)":
+                    errors["base"] = "invalid_symbol"
+                else:
+                    errors["base"] = "unknown"
+                    _LOGGER.error(err)
+            if errors == {}:
+                account = credentials["account"]
+                keystore = credentials["keystore"]
                 client = Vulcan(keystore, account)
                 students = await client.get_students()
                 await client.close()
@@ -233,9 +274,7 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required("pin"): str,
                 }
             ),
-            description_placeholders={
-                "error_text": "\nERROR: " + error if error else ""
-            },
+            errors=errors,
         )
 
 
