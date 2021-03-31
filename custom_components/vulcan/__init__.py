@@ -2,9 +2,11 @@
 import asyncio
 import logging
 
+from vulcan import Account, Keystore, Vulcan
+from vulcan._utils import VulcanAPIException
+
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import ConfigType
-from vulcan import Account, Keystore, Vulcan
 
 from .const import DOMAIN
 
@@ -32,7 +34,24 @@ async def async_setup_entry(hass, config_entry):
             if str(student.pupil.id) == str(config_entry.data.get("student_id")):
                 client.student = student
                 break
-    except:
+    except VulcanAPIException as err:
+        if str(err) == "The certificate is not authorized.":
+            _LOGGER.error(
+                "The certificate is not authorized, please authorize integration again."
+            )
+            hass.async_create_task(
+                hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": "reauth"},
+                )
+            )
+        else:
+            _LOGGER.error("Vulcan API error: %s", err)
+        return False
+    except FileNotFoundError as err:
+        _LOGGER.error(
+            "The certificate is not authorized, please authorize integration again."
+        )
         hass.async_create_task(
             hass.config_entries.flow.async_init(
                 DOMAIN,
@@ -49,12 +68,11 @@ async def async_setup_entry(hass, config_entry):
     if not config_entry.update_listeners:
         update_listener = config_entry.add_update_listener(_async_update_options)
 
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
-    )
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(config_entry, "calendar")
-    )
+    for platform in PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(config_entry, platform)
+        )
+
     return True
 
 

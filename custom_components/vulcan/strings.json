@@ -6,11 +6,12 @@
          "reauth_successful":"Reauth successful"
       },
       "error":{
-		 "unknown":"[%key:common::config_flow::error::unknown%]",
+		 "unknown": "[%key:common::config_flow::error::unknown%]",
 		 "invalid_token": "Invalid token",
 		 "expired_token": "Expired token - please generate a new token",
 		 "invalid_pin": "Invalid pin",
-		 "invalid_symbol": "Invalid symbol"
+		 "invalid_symbol": "Invalid symbol",
+		 "expired_credentials": "Expired credentials - please create new on Vulcan mobile app registration page"
       },
       "step":{
          "user":{

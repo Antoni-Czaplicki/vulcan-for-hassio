@@ -2,13 +2,14 @@
 import logging
 import os
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+from vulcan import Account, Keystore, Vulcan
+from vulcan._utils import VulcanAPIException
+
 from homeassistant import config_entries
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import callback
-from vulcan import Account, Keystore, Vulcan
-from vulcan._utils import VulcanAPIException
+import homeassistant.helpers.config_validation as cv
 
 from . import DOMAIN
 from .register import register
@@ -35,9 +36,8 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Get the options flow for this handler."""
         return VulcanOptionsFlowHandler(config_entry)
 
-    async def async_step_user(self, user_input=None, is_new_account=False):
+    async def async_step_user(self, user_input=None, is_new_account=False, errors={}):
         """GUI > Configuration > Integrations > Plus > Uonet+ Vulcan for Home Assistant"""
-        errors = {}
         if (
             self._async_current_entries()
             and is_new_account == False
@@ -134,11 +134,13 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_select_saved_credentials(self, user_input=None):
         error = None
         credentials_list = {}
-        for file in os.listdir(".vulcan"):
+        file_list = os.listdir(".vulcan")
+        for file in file_list:
             if file.startswith("account-") and file.endswith(".json"):
-                credentials_list[os.path.join(".vulcan", file)] = file[
-                    len("account-") :
-                ][: -len(".json")]
+                if file.replace("account", "keystore") in file_list:
+                    credentials_list[os.path.join(".vulcan", file)] = file[
+                        len("account-") :
+                    ][: -len(".json")]
 
         if user_input is not None:
             with open(user_input["credentials"].replace("account", "keystore")) as f:
@@ -147,8 +149,22 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 account = Account.load(f)
             self.account = account
             client = Vulcan(keystore, account)
-            self._students = await client.get_students()
-            await client.close()
+            try:
+                self._students = await client.get_students()
+            except VulcanAPIException as err:
+                if str(err) == "The certificate is not authorized.":
+                    os.remove(user_input["credentials"])
+                    os.remove(user_input["credentials"].replace("account", "keystore"))
+                    return await self.async_step_user(
+                        is_new_account=True, errors={"base": "expired_credentials"}
+                    )
+                else:
+                    return await self.async_step_user(
+                        is_new_account=True, errors={"base": "unknown"}
+                    )
+                    _LOGGER.error(err)
+            finally:
+                await client.close()
             if len(self._students) == 1:
                 self._student = self._students[0]
                 await self.async_set_unique_id(str(self._student.pupil.id))

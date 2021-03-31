@@ -2,10 +2,17 @@
 import datetime
 from datetime import timedelta
 
+import async_timeout
+
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_SCAN_INTERVAL
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 
-from . import DOMAIN, VulcanEntity
+from . import _LOGGER, DOMAIN, VulcanEntity
 from .const import (
     CONF_ATTENDANCE_NOTIFY,
     CONF_GRADE_NOTIFY,
@@ -35,15 +42,33 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         else SCAN_INTERVAL
     )
     client = hass.data[DOMAIN][config_entry.entry_id]
+
+    async def async_update_data():
+        try:
+            async with async_timeout.timeout(30):
+                return {
+                    "lessons": await get_lesson_info(client),
+                    "lessons_t": await get_lesson_info(
+                        client, date_from=datetime.date.today() + timedelta(days=1)
+                    ),
+                }
+        except:
+            raise UpdateFailed(f"Error communicating with API: ")
+
+    coordinator = DataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name="vulcan_timetable",
+        update_method=async_update_data,
+        update_interval=SCAN_INTERVAL,
+    )
+    await coordinator.async_refresh()
+
     data = {
         "student_info": await get_student_info(
             client, config_entry.data.get("student_id")
         ),
         "students_number": hass.data[DOMAIN]["students_number"],
-        "lessons": await get_lesson_info(client),
-        "lessons_t": await get_lesson_info(
-            client, date_from=datetime.date.today() + timedelta(days=1)
-        ),
         "grade": await get_latest_grade(client),
         "lucky_number": await get_lucky_number(client),
         "attendance": await get_latest_attendance(client),
@@ -63,16 +88,16 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         NextExam(client, data),
     ]
     for i in range(10):
-        entities.append(VulcanLessonEntity(client, data, i + 1))
+        entities.append(VulcanLessonEntity(coordinator, data, i + 1))
     for i in range(10):
-        entities.append(VulcanLessonEntity(client, data, i + 1, True))
+        entities.append(VulcanLessonEntity(coordinator, data, i + 1, True))
 
     async_add_entities(entities)
 
 
-class VulcanLessonEntity(VulcanEntity):
-    def __init__(self, client, data, number, _tomorrow=False):
-        self.client = client
+class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
+    def __init__(self, coordinator, data, number, _tomorrow=False):
+        super().__init__(coordinator)
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
@@ -86,13 +111,13 @@ class VulcanLessonEntity(VulcanEntity):
 
         self.number = str(number)
         if _tomorrow == True:
-            tomorrow = "_t"
+            self.tomorrow = "_t"
             name_tomorrow = " (Tomorrow)"
             self.tomorrow_device_id = "tomorrow_"
             self.device_name_tomorrow = "Tomorrow "
             self.num_tomorrow = timedelta(days=1)
         else:
-            tomorrow = ""
+            self.tomorrow = ""
             name_tomorrow = " "
             self.tomorrow_device_id = ""
             self.device_name_tomorrow = ""
@@ -103,16 +128,21 @@ class VulcanLessonEntity(VulcanEntity):
         else:
             space = " "
 
-        self.lesson = data[f"lessons{tomorrow}"][f"lesson_{self.number}"]
-        self._state = self.lesson["lesson"]
-
         self._name = f"Lesson{space}{self.number}{name_tomorrow}{name}"
-        self._unique_id = f"lesson_{tomorrow}{self.number}_{self.student_id}"
+        self._unique_id = f"lesson_{self.tomorrow}{self.number}_{self.student_id}"
         self._icon = "mdi:timetable"
 
     @property
+    def state(self):
+        return self.coordinator.data[f"lessons{self.tomorrow}"][
+            f"lesson_{self.number}"
+        ]["lesson"]
+
+    @property
     def device_state_attributes(self):
-        lesson_info = self.lesson
+        lesson_info = self.coordinator.data[f"lessons{self.tomorrow}"][
+            f"lesson_{self.number}"
+        ]
         atr = {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
@@ -134,19 +164,19 @@ class VulcanLessonEntity(VulcanEntity):
             "entry_type": "service",
         }
 
-    async def async_update(self):
-        try:
-            self.lesson_data = await get_lesson_info(
-                self.client,
-                date_from=datetime.date.today() + self.num_tomorrow,
-            )
-        except:
-            self.lesson_data = await get_lesson_info(
-                self.client,
-                date_from=datetime.date.today() + self.num_tomorrow,
-            )
-        self.lesson = self.lesson_data[f"lesson_{self.number}"]
-        self._state = self.lesson["lesson"]
+    # async def async_update(self):
+    # try:
+    # self.lesson_data = await get_lesson_info(
+    # self.client,
+    # date_from=datetime.date.today() + self.num_tomorrow,
+    # )
+    # except:
+    # self.lesson_data = await get_lesson_info(
+    # self.client,
+    # date_from=datetime.date.today() + self.num_tomorrow,
+    # )
+    # self.lesson = self.lesson_data[f"lesson_{self.number}"]
+    # self._state = self.lesson["lesson"]
 
 
 class LatestAttendance(VulcanEntity):

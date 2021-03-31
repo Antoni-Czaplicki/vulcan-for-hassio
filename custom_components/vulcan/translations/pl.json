@@ -10,7 +10,8 @@
 		 "invalid_token":"Niepoprawny token",
 		 "expired_token":"Token utracił ważność - prosimy wygenerować nowy token",
 		 "invalid_pin":"Niepoprawny pin",
-		 "invalid_symbol":"Niepoprawny symbol"
+		 "invalid_symbol":"Niepoprawny symbol",
+		 "expired_credentials": "Te dane logowania utraciły ważność - wygeneruj nowe na stronie dodawania aplikacji Vulcan."
       },
       "step":{
          "user":{

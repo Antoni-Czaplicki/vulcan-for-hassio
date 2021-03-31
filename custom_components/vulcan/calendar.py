@@ -1,7 +1,7 @@
 """Support for Vulcan Calendar."""
 import copy
-import logging
 from datetime import date, datetime, timedelta
+import logging
 
 from homeassistant.components.calendar import (
     ENTITY_ID_FORMAT,
