@@ -14,20 +14,20 @@ All integration settings are available in the options in the integration configu
 ![image](https://raw.githubusercontent.com/Antoni-Czaplicki/vulcan-for-hassio/master/docs/images/options.png)
 
 ## Timetable
-###Calendar
+### Calendar
 Calendar view with all lessons.
 
-####Month
+#### Month
 ![image](https://raw.githubusercontent.com/Antoni-Czaplicki/vulcan-for-hassio/master/docs/images/calendar-month.png)
-####Week
+#### Week
 ![image](https://raw.githubusercontent.com/Antoni-Czaplicki/vulcan-for-hassio/master/docs/images/calendar-week.png)
 
 
-####Calendar entity
+#### Calendar entity
 Integration is also creating calendar entity wich can be used in automations.
 ![image](https://raw.githubusercontent.com/Antoni-Czaplicki/vulcan-for-hassio/master/docs/images/calendar-entity.png)
 
-###Sensors
+### Sensors
 Integration is creating ten entities for today and also ten for tomorrow.
 ![image](https://raw.githubusercontent.com/Antoni-Czaplicki/vulcan-for-hassio/master/docs/images/lesson.png)
 
