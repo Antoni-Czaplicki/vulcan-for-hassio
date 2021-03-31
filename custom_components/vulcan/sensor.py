@@ -3,7 +3,6 @@ import datetime
 from datetime import timedelta
 
 import async_timeout
-
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.helpers.update_coordinator import (
