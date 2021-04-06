@@ -163,20 +163,6 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
             "entry_type": "service",
         }
 
-    # async def async_update(self):
-    # try:
-    # self.lesson_data = await get_lesson_info(
-    # self.client,
-    # date_from=datetime.date.today() + self.num_tomorrow,
-    # )
-    # except:
-    # self.lesson_data = await get_lesson_info(
-    # self.client,
-    # date_from=datetime.date.today() + self.num_tomorrow,
-    # )
-    # self.lesson = self.lesson_data[f"lesson_{self.number}"]
-    # self._state = self.lesson["lesson"]
-
 
 class LatestAttendance(VulcanEntity):
     def __init__(self, client, data):
