@@ -2,10 +2,13 @@
 import asyncio
 import logging
 
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.typing import ConfigType
+from aiohttp import ClientConnectorError
 from vulcan import Account, Keystore, Vulcan
 from vulcan._utils import VulcanAPIException
+
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
 
@@ -58,6 +61,14 @@ async def async_setup_entry(hass, config_entry):
             )
         )
         return False
+    except ClientConnectorError as err:
+        if "connection_error" not in hass.data[DOMAIN]:
+            _LOGGER.error(
+                "Connection error - please check your internet connection: %s", err
+            )
+            hass.data[DOMAIN]["connection_error"] = True
+        await client.close()
+        raise ConfigEntryNotReady
     num = 0
     for _ in hass.config_entries.async_entries(DOMAIN):
         num += 1
