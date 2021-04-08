@@ -12,7 +12,6 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-
 from vulcan._utils import VulcanAPIException
 
 from . import _LOGGER, DOMAIN, VulcanEntity
