@@ -2,8 +2,10 @@
 import datetime
 from datetime import timedelta
 
-import async_timeout
 from aiohttp import ClientConnectorError
+import async_timeout
+from vulcan._utils import VulcanAPIException
+
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.exceptions import PlatformNotReady
@@ -12,8 +14,6 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-
-from vulcan._utils import VulcanAPIException
 
 from . import _LOGGER, DOMAIN, VulcanEntity
 from .const import (
