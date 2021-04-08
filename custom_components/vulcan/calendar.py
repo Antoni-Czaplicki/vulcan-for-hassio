@@ -18,6 +18,7 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.template import DATE_STR_FORMAT
 from homeassistant.util import Throttle, dt
+
 from vulcan._utils import VulcanAPIException
 
 from . import DOMAIN
@@ -27,16 +28,7 @@ _LOGGER = logging.getLogger(__name__)
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
 
-from .fetch_data import (
-    get_latest_attendance,
-    get_latest_grade,
-    get_latest_message,
-    get_lesson_info,
-    get_lucky_number,
-    get_next_exam,
-    get_next_homework,
-    get_student_info,
-)
+from .fetch_data import get_lesson_info, get_student_info
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):

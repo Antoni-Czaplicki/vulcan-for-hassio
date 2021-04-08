@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+
 from vulcan._utils import VulcanAPIException
 
 from . import _LOGGER, DOMAIN, VulcanEntity
@@ -298,7 +299,7 @@ class LatestMessage(VulcanEntity):
             "entry_type": "service",
         }
 
-    def update(self):
+    async def async_update(self):
         try:
             self.latest_message = await get_latest_message(self.client)
         except:

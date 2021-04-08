@@ -6,6 +6,7 @@ from aiohttp import ClientConnectorError
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import ConfigType
+
 from vulcan import Account, Keystore, Vulcan
 from vulcan._utils import VulcanAPIException
 

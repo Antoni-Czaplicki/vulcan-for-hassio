@@ -7,6 +7,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import callback
+
 from vulcan import Account, Keystore, Vulcan
 from vulcan._utils import VulcanAPIException
 
@@ -29,6 +30,8 @@ LOGIN_SCHEMA = {
 
 
 class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+    VERSION = 1
+
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
