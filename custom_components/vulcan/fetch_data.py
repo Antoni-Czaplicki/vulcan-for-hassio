@@ -238,13 +238,14 @@ async def get_next_exam(client):
     return next_exam
 
 
-def get_latest_message(client):
-    for message in client.data.get_messages():
+async def get_latest_message(client):
+    async for message in await client.data.get_messages():
         latest_message = {}
-        latest_message["title"] = message.title
+        latest_message["id"] = message.id
+        latest_message["subject"] = message.title
         latest_message["content"] = message.content
         if message.sender is not None:
-            latest_message["sender"] = message.sender.name
+            latest_message["sender"] = message.sender.address_name
         else:
             latest_message["sender"] = "Nieznany"
         latest_message[
@@ -253,7 +254,8 @@ def get_latest_message(client):
 
     if latest_message == {}:
         latest_message = {
-            "title": "-",
+            "id": 0,
+            "subject": "-",
             "content": "-",
             "date": "-",
             "sender": "-",

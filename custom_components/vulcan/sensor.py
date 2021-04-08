@@ -2,9 +2,13 @@
 import datetime
 from datetime import timedelta
 
+from aiohttp import ClientConnectorError
 import async_timeout
+from vulcan._utils import VulcanAPIException
+
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_SCAN_INTERVAL
+from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -51,8 +55,23 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                         client, date_from=datetime.date.today() + timedelta(days=1)
                     ),
                 }
-        except:
-            raise UpdateFailed(f"Error communicating with API: ")
+        except VulcanAPIException as err:
+            if str(err) == "The certificate is not authorized.":
+                _LOGGER.error(
+                    "The certificate is not authorized, please authorize integration again."
+                )
+                hass.async_create_task(
+                    hass.config_entries.flow.async_init(
+                        DOMAIN,
+                        context={"source": "reauth"},
+                    )
+                )
+            else:
+                raise UpdateFailed(f"Error communicating with API: {err}")
+        except ClientConnectorError as err:
+            raise UpdateFailed(f"Error communicating with API: {err}")
+        except Exception as err:
+            raise UpdateFailed(err)
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -63,22 +82,33 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     )
     await coordinator.async_refresh()
 
-    data = {
-        "student_info": await get_student_info(
-            client, config_entry.data.get("student_id")
-        ),
-        "students_number": hass.data[DOMAIN]["students_number"],
-        "grade": await get_latest_grade(client),
-        "lucky_number": await get_lucky_number(client),
-        "attendance": await get_latest_attendance(client),
-        "homework": await get_next_homework(client),
-        "exam": await get_next_exam(client),
-        "notify": {
-            CONF_MESSAGE_NOTIFY: config_entry.options.get(CONF_MESSAGE_NOTIFY),
-            CONF_GRADE_NOTIFY: config_entry.options.get(CONF_GRADE_NOTIFY),
-            CONF_ATTENDANCE_NOTIFY: config_entry.options.get(CONF_ATTENDANCE_NOTIFY),
-        },
-    }
+    try:
+        data = {
+            "student_info": await get_student_info(
+                client, config_entry.data.get("student_id")
+            ),
+            "students_number": hass.data[DOMAIN]["students_number"],
+            "grade": await get_latest_grade(client),
+            "lucky_number": await get_lucky_number(client),
+            "attendance": await get_latest_attendance(client),
+            "homework": await get_next_homework(client),
+            "exam": await get_next_exam(client),
+            "notify": {
+                CONF_MESSAGE_NOTIFY: config_entry.options.get(CONF_MESSAGE_NOTIFY),
+                CONF_GRADE_NOTIFY: config_entry.options.get(CONF_GRADE_NOTIFY),
+                CONF_ATTENDANCE_NOTIFY: config_entry.options.get(
+                    CONF_ATTENDANCE_NOTIFY
+                ),
+            },
+        }
+    except ClientConnectorError as err:
+        if "connection_error" not in hass.data[DOMAIN]:
+            _LOGGER.error(
+                "Connection error - please check your internet connection: %s", err
+            )
+            hass.data[DOMAIN]["connection_error"] = True
+        raise PlatformNotReady
+
     entities = [
         LatestGrade(client, data),
         LuckyNumber(client, data),
@@ -271,9 +301,9 @@ class LatestMessage(VulcanEntity):
 
     def update(self):
         try:
-            self.latest_message = get_latest_message(self.client)
+            self.latest_message = await get_latest_message(self.client)
         except:
-            self.latest_message = get_latest_message(self.client)
+            self.latest_message = await get_latest_message(self.client)
         message_latest = self.latest_message
         if self.notify == True:
             if self.old_msg != self.latest_message["content"]:

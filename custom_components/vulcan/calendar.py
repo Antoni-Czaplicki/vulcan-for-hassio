@@ -1,7 +1,10 @@
 """Support for Vulcan Calendar."""
 import copy
-import logging
 from datetime import date, datetime, timedelta
+import logging
+
+from aiohttp import ClientConnectorError
+from vulcan._utils import VulcanAPIException
 
 from homeassistant.components.calendar import (
     ENTITY_ID_FORMAT,
@@ -145,17 +148,42 @@ class VulcanCalendarData:
         self.client = client
         self.student_info = student_info
         self.event = None
+        self._available = True
 
     async def async_get_events(self, hass, start_date, end_date):
         """Get all events in a specific time frame."""
+        try:
+            events = await get_lesson_info(
+                self.client,
+                date_from=start_date,
+                date_to=end_date,
+                type_="list",
+            )
+        except VulcanAPIException as err:
+            if str(err) == "The certificate is not authorized.":
+                _LOGGER.error(
+                    "The certificate is not authorized, please authorize integration again."
+                )
+                hass.async_create_task(
+                    hass.config_entries.flow.async_init(
+                        DOMAIN,
+                        context={"source": "reauth"},
+                    )
+                )
+            else:
+                _LOGGER.error("An API error has occurred: %s", err)
+            events = []
+        except ClientConnectorError as err:
+            if self._available:
+                _LOGGER.warning(
+                    "Connection error - please check your internet connection: %s", err
+                )
+                self._available = False
+            events = []
 
-        events = await get_lesson_info(
-            self.client,
-            date_from=start_date,
-            date_to=end_date,
-            type_="list",
-        )
-
+        if not self._available:
+            _LOGGER.info("Restored connection with API")
+            self._available = True
         event_list = []
         for item in events:
             event = {
@@ -183,16 +211,44 @@ class VulcanCalendarData:
     async def async_update(self):
         """Get the latest data."""
 
-        events = await get_lesson_info(self.client, type_="list")
-        if events == []:
-            events = await get_lesson_info(
-                self.client,
-                date_to=date.today() + timedelta(days=7),
-                type_="list",
-            )
+        try:
+            events = await get_lesson_info(self.client, type_="list")
+
             if events == []:
-                self.event = None
-                return
+                events = await get_lesson_info(
+                    self.client,
+                    date_to=date.today() + timedelta(days=7),
+                    type_="list",
+                )
+                if events == []:
+                    self.event = None
+                    return
+        except VulcanAPIException as err:
+            if str(err) == "The certificate is not authorized.":
+                _LOGGER.error(
+                    "The certificate is not authorized, please authorize integration again."
+                )
+                self.hass.async_create_task(
+                    self.hass.config_entries.flow.async_init(
+                        DOMAIN,
+                        context={"source": "reauth"},
+                    )
+                )
+            else:
+                _LOGGER.error("An API error has occurred: %s", err)
+            return
+        except ClientConnectorError as err:
+            if self._available:
+                _LOGGER.warning(
+                    "Connection error - please check your internet connection: %s", err
+                )
+                self._available = False
+            return
+
+        if not self._available:
+            _LOGGER.info("Restored connection with API")
+            self._available = True
+
         new_event = min(
             events,
             key=lambda d: (
