@@ -242,7 +242,7 @@ async def get_latest_message(client):
     async for message in await client.data.get_messages():
         latest_message = {}
         latest_message["id"] = message.id
-        latest_message["subject"] = message.title
+        latest_message["title"] = message.subject
         latest_message["content"] = message.content
         if message.sender is not None:
             latest_message["sender"] = message.sender.address_name
@@ -250,12 +250,12 @@ async def get_latest_message(client):
             latest_message["sender"] = "Nieznany"
         latest_message[
             "date"
-        ] = f"{message.sent_date.strftime('%Y.%m.%d')} {message.sent_time.strftime('%H:%M')}"
+        ] = f"{message.sent_date.time.strftime('%H:%M')} {message.sent_date.date.strftime('%d.%m.%Y')}"
 
     if latest_message == {}:
         latest_message = {
             "id": 0,
-            "subject": "-",
+            "title": "-",
             "content": "-",
             "date": "-",
             "sender": "-",

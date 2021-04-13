@@ -57,7 +57,7 @@
       "step":{
          "init":{
             "data":{
-               "message_notify":"Pokazuj powiadomienia o najnowszych wiadomościach (aktualnie niedostępne)",
+               "message_notify":"Pokazuj powiadomienia o najnowszych wiadomościach",
                "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
                "grade_notify":"Pokazuj powiadomienia o najnowszych ocenach",
                "scan_interval":"Częstotliwość aktualizacji (w minutach)"

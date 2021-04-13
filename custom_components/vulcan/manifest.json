@@ -2,7 +2,7 @@
 {
   "domain": "vulcan",
   "name": "Uonet+ Vulcan",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "config_flow": true,
   "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
   "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
@@ -10,6 +10,6 @@
     "@Antoni-Czaplicki"
   ],
   "requirements": [
-    "vulcan-api==2.0.0b2"
+    "vulcan-api==2.0.0"
   ]
 }

@@ -88,6 +88,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             ),
             "students_number": hass.data[DOMAIN]["students_number"],
             "grade": await get_latest_grade(client),
+            "message": await get_latest_message(client),
             "lucky_number": await get_lucky_number(client),
             "attendance": await get_latest_attendance(client),
             "homework": await get_next_homework(client),
@@ -112,6 +113,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         LatestGrade(client, data),
         LuckyNumber(client, data),
         LatestAttendance(client, data),
+        LatestMessage(client, data),
         NextHomework(client, data),
         NextExam(client, data),
     ]
@@ -260,11 +262,9 @@ class LatestMessage(VulcanEntity):
     def __init__(self, client, data):
         self.client = client
         self.student_info = data["student_info"]
-        self.student_name = self.student_info["full_name"]
-        self.student_id = str(self.student_info["id"])
-        self.latest_message = get_latest_message()
+        self.latest_message = data["message"]
         self.notify = data["notify"][CONF_MESSAGE_NOTIFY]
-        self.old_msg = self.latest_message["content"]
+        self.old_msg = self.latest_message["id"]
         self._state = self.latest_message["title"][0:250]
 
         if data["students_number"] == 1:
@@ -274,7 +274,7 @@ class LatestMessage(VulcanEntity):
             name = f" - {self.student_info['full_name']}"
             self.device_student_name = f"{self.student_info['full_name']}: "
         self._name = f"Latest Message{name}"
-        self._unique_id = f"message_latest_{self.student_id}"
+        self._unique_id = f"message_latest_{self.student_info['id']}"
         self._icon = "mdi:message-arrow-left-outline"
 
     @property
@@ -291,7 +291,7 @@ class LatestMessage(VulcanEntity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, f"message{self.student_id}")},
+            "identifiers": {(DOMAIN, f"message{self.student_info['id']}")},
             "manufacturer": "Uonet +",
             "model": f"{self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}Messages",
@@ -305,13 +305,16 @@ class LatestMessage(VulcanEntity):
             self.latest_message = await get_latest_message(self.client)
         message_latest = self.latest_message
         if self.notify == True:
-            if self.old_msg != self.latest_message["content"]:
+            if (
+                self.old_msg != self.latest_message["id"]
+                and self.latest_message["id"] != 0
+            ):
                 persistent_notification.async_create(
                     self.hass,
                     f"{self.latest_message['sender']}, {self.latest_message['date']}\n{self.latest_message['content']}",
                     f"Vulcan: {self.latest_message['title']}",
                 )
-                self.old_msg = self.latest_message["content"]
+                self.old_msg = self.latest_message["id"]
         self._state = message_latest["title"][0:250]
 
 
