@@ -55,19 +55,17 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input["pin"],
                 )
             except VulcanAPIException as err:
-                if str(err) == "Invalid token!":
+                if str(err) == "Invalid token!" or "Invalid token.":
                     errors["base"] = "invalid_token"
+                elif str(err) == "Expired token.":
+                    errors["base"] = "expired_token"
+                elif str(err) == "Invalid PIN.":
+                    errors["base"] = "invalid_pin"
                 else:
                     errors["base"] = "unknown"
                     _LOGGER.error(err)
             except RuntimeError as err:
-                if str(err) == "Żądany byt `Token` nie został odnaleziony":
-                    errors["base"] = "invalid_token"
-                elif str(err) == "Token nieaktywny - prosimy wygenerować nowy token":
-                    errors["base"] = "expired_token"
-                elif str(err) == "Zły PIN - spróbuj ponownie.":
-                    errors["base"] = "invalid_pin"
-                elif str(err) == "Internal Server Error (ArgumentException)":
+                if str(err) == "Internal Server Error (ArgumentException)":
                     errors["base"] = "invalid_symbol"
                 else:
                     errors["base"] = "unknown"
@@ -239,19 +237,17 @@ class vulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input["pin"],
                 )
             except VulcanAPIException as err:
-                if str(err) == "Invalid token!":
+                if str(err) == "Invalid token!" or "Invalid token.":
                     errors["base"] = "invalid_token"
+                elif str(err) == "Expired token.":
+                    errors["base"] = "expired_token"
+                elif str(err) == "Invalid PIN.":
+                    errors["base"] = "invalid_pin"
                 else:
                     errors["base"] = "unknown"
                     _LOGGER.error(err)
             except RuntimeError as err:
-                if str(err) == "Żądany byt `Token` nie został odnaleziony":
-                    errors["base"] = "invalid_token"
-                elif str(err) == "Token nieaktywny - prosimy wygenerować nowy token":
-                    errors["base"] = "expired_token"
-                elif str(err) == "Zły PIN - spróbuj ponownie.":
-                    errors["base"] = "invalid_pin"
-                elif str(err) == "Internal Server Error (ArgumentException)":
+                if str(err) == "Internal Server Error (ArgumentException)":
                     errors["base"] = "invalid_symbol"
                 else:
                     errors["base"] = "unknown"
