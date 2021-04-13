@@ -36,8 +36,7 @@ Student's latest grade.
 ![image](https://raw.githubusercontent.com/Antoni-Czaplicki/vulcan-for-hassio/master/docs/images/grade.png)
 
 ## Messages
-~Latest message sensor. You can activate notification in integration options.~  
-Actualy not available - new API doesn't have this feature yet, it will be added again soon.
+Latest message sensor. You can activate notification in integration options.
 ![image](https://raw.githubusercontent.com/Antoni-Czaplicki/vulcan-for-hassio/master/docs/images/message.png)
 
 ## Attendance
