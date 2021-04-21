@@ -7,31 +7,18 @@ from aiohttp import ClientConnectorError
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.exceptions import PlatformNotReady
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-    UpdateFailed,
-)
+from homeassistant.helpers.update_coordinator import (CoordinatorEntity,
+                                                      DataUpdateCoordinator,
+                                                      UpdateFailed)
 from vulcan._utils import VulcanAPIException
 
 from . import _LOGGER, DOMAIN, VulcanEntity
-from .const import (
-    CONF_ATTENDANCE_NOTIFY,
-    CONF_GRADE_NOTIFY,
-    CONF_MESSAGE_NOTIFY,
-    DEFAULT_SCAN_INTERVAL,
-    PARALLEL_UPDATES,
-)
-from .fetch_data import (
-    get_latest_attendance,
-    get_latest_grade,
-    get_latest_message,
-    get_lesson_info,
-    get_lucky_number,
-    get_next_exam,
-    get_next_homework,
-    get_student_info,
-)
+from .const import (CONF_ATTENDANCE_NOTIFY, CONF_GRADE_NOTIFY,
+                    CONF_MESSAGE_NOTIFY, DEFAULT_SCAN_INTERVAL,
+                    PARALLEL_UPDATES)
+from .fetch_data import (get_latest_attendance, get_latest_grade,
+                         get_latest_message, get_lesson_info, get_lucky_number,
+                         get_next_exam, get_next_homework, get_student_info)
 
 SCAN_INTERVAL = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
 
@@ -49,7 +36,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         try:
             async with async_timeout.timeout(30):
                 return {
-                    "lessons": await get_lesson_info(client),
+                    "lessons": await get_lesson_info(
+                        client, date_from=datetime.date.today()
+                    ),
                     "lessons_t": await get_lesson_info(
                         client, date_from=datetime.date.today() + timedelta(days=1)
                     ),
@@ -126,8 +115,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
-    def __init__(self, coordinator, data, number, _tomorrow=False):
+    def __init__(self, coordinator, data, number, is_tomorrow=False):
         super().__init__(coordinator)
+        self.is_tomorrow = is_tomorrow
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
@@ -140,7 +130,7 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
             self.device_student_name = f"{self.student_info['full_name']}: "
 
         self.number = str(number)
-        if _tomorrow == True:
+        if self.is_tomorrow == True:
             self.tomorrow = "_t"
             name_tomorrow = " (Tomorrow)"
             self.tomorrow_device_id = "tomorrow_"
@@ -167,6 +157,24 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
         return self.coordinator.data[f"lessons{self.tomorrow}"][
             f"lesson_{self.number}"
         ]["lesson"]
+
+    @property
+    def available(self) -> bool:
+        if not self.coordinator.last_update_success:
+            if not self.is_tomorrow:
+                if (
+                    self.coordinator.data[f"lessons{self.tomorrow}"][
+                        f"lesson_{self.number}"
+                    ]["date"]
+                    != datetime.date.today()
+                ):
+                    return False
+            else:
+                if self.coordinator.data[f"lessons{self.tomorrow}"][
+                    f"lesson_{self.number}"
+                ]["date"] != datetime.date.today() + timedelta(days=1):
+                    return False
+        return True
 
     @property
     def device_state_attributes(self):

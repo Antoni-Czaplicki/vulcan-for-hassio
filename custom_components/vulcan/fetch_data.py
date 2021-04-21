@@ -87,6 +87,7 @@ async def get_lesson_info(client, date_from=None, date_to=None, type_="dict"):
                     "number": num + 1,
                     "lesson": "-",
                     "room": "-",
+                    "date": date_from,
                     "group": "-",
                     "teacher": "-",
                     "from_to": "-",

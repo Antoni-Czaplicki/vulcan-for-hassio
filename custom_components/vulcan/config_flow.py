@@ -14,12 +14,8 @@ from . import DOMAIN
 from .register import register
 
 _LOGGER = logging.getLogger(__name__)
-from .const import (
-    CONF_ATTENDANCE_NOTIFY,
-    CONF_GRADE_NOTIFY,
-    CONF_MESSAGE_NOTIFY,
-    DEFAULT_SCAN_INTERVAL,
-)
+from .const import (CONF_ATTENDANCE_NOTIFY, CONF_GRADE_NOTIFY,
+                    CONF_MESSAGE_NOTIFY, DEFAULT_SCAN_INTERVAL)
 
 LOGIN_SCHEMA = {
     vol.Required("token"): str,
