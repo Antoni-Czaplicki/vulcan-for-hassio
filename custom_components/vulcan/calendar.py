@@ -4,10 +4,17 @@ import logging
 from datetime import date, datetime, timedelta
 
 from aiohttp import ClientConnectorError
-from homeassistant.components.calendar import (ENTITY_ID_FORMAT,
-                                               CalendarEventDevice, get_date)
-from homeassistant.const import (CONF_DEVICE_ID, CONF_ENTITIES, CONF_NAME,
-                                 CONF_SCAN_INTERVAL)
+from homeassistant.components.calendar import (
+    ENTITY_ID_FORMAT,
+    CalendarEventDevice,
+    get_date,
+)
+from homeassistant.const import (
+    CONF_DEVICE_ID,
+    CONF_ENTITIES,
+    CONF_NAME,
+    CONF_SCAN_INTERVAL,
+)
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.template import DATE_STR_FORMAT
 from homeassistant.util import Throttle, dt

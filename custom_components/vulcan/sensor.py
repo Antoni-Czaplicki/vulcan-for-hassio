@@ -7,18 +7,31 @@ from aiohttp import ClientConnectorError
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.exceptions import PlatformNotReady
-from homeassistant.helpers.update_coordinator import (CoordinatorEntity,
-                                                      DataUpdateCoordinator,
-                                                      UpdateFailed)
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 from vulcan._utils import VulcanAPIException
 
 from . import _LOGGER, DOMAIN, VulcanEntity
-from .const import (CONF_ATTENDANCE_NOTIFY, CONF_GRADE_NOTIFY,
-                    CONF_MESSAGE_NOTIFY, DEFAULT_SCAN_INTERVAL,
-                    PARALLEL_UPDATES)
-from .fetch_data import (get_latest_attendance, get_latest_grade,
-                         get_latest_message, get_lesson_info, get_lucky_number,
-                         get_next_exam, get_next_homework, get_student_info)
+from .const import (
+    CONF_ATTENDANCE_NOTIFY,
+    CONF_GRADE_NOTIFY,
+    CONF_MESSAGE_NOTIFY,
+    DEFAULT_SCAN_INTERVAL,
+    PARALLEL_UPDATES,
+)
+from .fetch_data import (
+    get_latest_attendance,
+    get_latest_grade,
+    get_latest_message,
+    get_lesson_info,
+    get_lucky_number,
+    get_next_exam,
+    get_next_homework,
+    get_student_info,
+)
 
 SCAN_INTERVAL = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
 
