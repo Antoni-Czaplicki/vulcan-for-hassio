@@ -26,7 +26,7 @@ from .fetch_data import (
     get_latest_attendance,
     get_latest_grade,
     get_latest_message,
-    get_lesson_info,
+    get_lessons,
     get_lucky_number,
     get_next_exam,
     get_next_homework,
@@ -49,10 +49,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         try:
             async with async_timeout.timeout(30):
                 return {
-                    "lessons": await get_lesson_info(
+                    "lessons": await get_lessons(
                         client, date_from=datetime.date.today()
                     ),
-                    "lessons_t": await get_lesson_info(
+                    "lessons_t": await get_lessons(
                         client, date_from=datetime.date.today() + timedelta(days=1)
                     ),
                 }

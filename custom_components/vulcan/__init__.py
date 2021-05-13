@@ -1,11 +1,11 @@
 """The Vulcan component."""
-import asyncio
 import logging
 
 from aiohttp import ClientConnectorError
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.typing import ConfigType
 from vulcan import Account, Keystore, Vulcan
 from vulcan._utils import VulcanAPIException
 
@@ -13,32 +13,28 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "calendar"]
+PLATFORMS = ["calendar", "sensor"]
 
 
-async def async_setup(hass, config) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Set up Uonet+ Vulcan integration."""
     hass.data.setdefault(DOMAIN, {})
-
-    return True
-
-
-async def async_setup_entry(hass, config_entry):
     try:
-        with open(f".vulcan/keystore-{config_entry.data.get('login')}.json") as f:
-            keystore = Keystore.load(f)
-        with open(f".vulcan/account-{config_entry.data.get('login')}.json") as f:
-            account = Account.load(f)
+        with open(f".vulcan/keystore-{entry.data.get('login')}.json") as file:
+            keystore = Keystore.load(file)
+        with open(f".vulcan/account-{entry.data.get('login')}.json") as file:
+            account = Account.load(file)
         client = Vulcan(keystore, account)
         await client.select_student()
         students = await client.get_students()
         for student in students:
-            if str(student.pupil.id) == str(config_entry.data.get("student_id")):
+            if str(student.pupil.id) == str(entry.data.get("student_id")):
                 client.student = student
                 break
     except VulcanAPIException as err:
         if str(err) == "The certificate is not authorized.":
             _LOGGER.error(
-                "The certificate is not authorized, please authorize integration again."
+                "The certificate is not authorized, please authorize integration again"
             )
             hass.async_create_task(
                 hass.config_entries.flow.async_init(
@@ -49,9 +45,9 @@ async def async_setup_entry(hass, config_entry):
         else:
             _LOGGER.error("Vulcan API error: %s", err)
         return False
-    except FileNotFoundError as err:
+    except FileNotFoundError:
         _LOGGER.error(
-            "The certificate is not authorized, please authorize integration again."
+            "The certificate is not authorized, please authorize integration again"
         )
         hass.async_create_task(
             hass.config_entries.flow.async_init(
@@ -67,19 +63,19 @@ async def async_setup_entry(hass, config_entry):
             )
             hass.data[DOMAIN]["connection_error"] = True
         await client.close()
-        raise ConfigEntryNotReady
+        raise ConfigEntryNotReady from err
     num = 0
     for _ in hass.config_entries.async_entries(DOMAIN):
         num += 1
     hass.data[DOMAIN]["students_number"] = num
-    hass.data[DOMAIN][config_entry.entry_id] = client
+    hass.data[DOMAIN][entry.entry_id] = client
 
-    if not config_entry.update_listeners:
-        update_listener = config_entry.add_update_listener(_async_update_options)
+    if not entry.update_listeners:
+        entry.add_update_listener(_async_update_options)
 
     for platform in PLATFORMS:
         hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(config_entry, platform)
+            hass.config_entries.async_forward_entry_setup(entry, platform)
         )
 
     return True
@@ -87,6 +83,7 @@ async def async_setup_entry(hass, config_entry):
 
 async def async_unload_entry(hass, entry):
     """Unload a config entry."""
+    await hass.data[DOMAIN][entry.entry_id].close()
     for platform in PLATFORMS:
         await hass.config_entries.async_forward_entry_unload(entry, platform)
 

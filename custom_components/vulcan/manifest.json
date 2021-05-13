@@ -1,15 +1,19 @@
- 
 {
   "domain": "vulcan",
   "name": "Uonet+ Vulcan",
-  "version": "0.10.0",
   "config_flow": true,
-  "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
-  "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
+  "documentation": "https://www.home-assistant.io/integrations/vulcan",
+  "requirements": [
+    "vulcan-api==2.0.0"
+  ],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
   "codeowners": [
     "@Antoni-Czaplicki"
   ],
-  "requirements": [
-    "vulcan-api==2.0.0"
-  ]
+  "iot_class": "cloud_polling",
+  "quality_scale": "platinum",
+  "version": "0.10.1"
 }

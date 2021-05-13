@@ -1,20 +1,11 @@
-"""Support for Vulcan Calendar."""
+"""Support for Vulcan Calendar platform."""
 import copy
 import logging
 from datetime import date, datetime, timedelta
 
 from aiohttp import ClientConnectorError
-from homeassistant.components.calendar import (
-    ENTITY_ID_FORMAT,
-    CalendarEventDevice,
-    get_date,
-)
-from homeassistant.const import (
-    CONF_DEVICE_ID,
-    CONF_ENTITIES,
-    CONF_NAME,
-    CONF_SCAN_INTERVAL,
-)
+from homeassistant.components.calendar import ENTITY_ID_FORMAT, CalendarEventDevice
+from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.template import DATE_STR_FORMAT
 from homeassistant.util import Throttle, dt
@@ -22,17 +13,16 @@ from vulcan._utils import VulcanAPIException
 
 from . import DOMAIN
 from .const import DEFAULT_SCAN_INTERVAL
+from .fetch_data import get_lessons, get_student_info
 
 _LOGGER = logging.getLogger(__name__)
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
 
-from .fetch_data import get_lesson_info, get_student_info
-
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the calendar platform for event devices."""
-    global MIN_TIME_BETWEEN_UPDATES
+    global MIN_TIME_BETWEEN_UPDATES  # pylint: disable=global-statement
     MIN_TIME_BETWEEN_UPDATES = (
         timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL))
         if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
@@ -69,6 +59,7 @@ class VulcanCalendarEventDevice(CalendarEventDevice):
         self.data = VulcanCalendarData(
             client,
             self.student_info,
+            self.hass,
         )
         self._event = None
         self.entity_id = entity_id
@@ -84,10 +75,12 @@ class VulcanCalendarEventDevice(CalendarEventDevice):
 
     @property
     def unique_id(self):
+        """Return unique id."""
         return self._unique_id
 
     @property
     def device_info(self):
+        """Return device info."""
         return {
             "identifiers": {(DOMAIN, f"calendar_{self.student_info['id']}")},
             "manufacturer": "Uonet +",
@@ -133,17 +126,18 @@ class VulcanCalendarEventDevice(CalendarEventDevice):
 class VulcanCalendarData:
     """Class to utilize calendar service object to get next event."""
 
-    def __init__(self, client, student_info):
+    def __init__(self, client, student_info, hass):
         """Set up how we are going to search the Vulcan calendar."""
         self.client = client
-        self.student_info = student_info
         self.event = None
+        self.hass = hass
+        self.student_info = student_info
         self._available = True
 
     async def async_get_events(self, hass, start_date, end_date):
         """Get all events in a specific time frame."""
         try:
-            events = await get_lesson_info(
+            events = await get_lessons(
                 self.client,
                 date_from=start_date,
                 date_to=end_date,
@@ -152,7 +146,7 @@ class VulcanCalendarData:
         except VulcanAPIException as err:
             if str(err) == "The certificate is not authorized.":
                 _LOGGER.error(
-                    "The certificate is not authorized, please authorize integration again."
+                    "The certificate is not authorized, please authorize integration again"
                 )
                 hass.async_create_task(
                     hass.config_entries.flow.async_init(
@@ -198,14 +192,14 @@ class VulcanCalendarData:
         """Get the latest data."""
 
         try:
-            events = await get_lesson_info(self.client, type_="list")
+            events = await get_lessons(self.client, type_="list")
 
             if not self._available:
                 _LOGGER.info("Restored connection with API")
                 self._available = True
 
             if events == []:
-                events = await get_lesson_info(
+                events = await get_lessons(
                     self.client,
                     date_to=date.today() + timedelta(days=7),
                     type_="list",
@@ -216,7 +210,7 @@ class VulcanCalendarData:
         except VulcanAPIException as err:
             if str(err) == "The certificate is not authorized.":
                 _LOGGER.error(
-                    "The certificate is not authorized, please authorize integration again."
+                    "The certificate is not authorized, please authorize integration again"
                 )
                 self.hass.async_create_task(
                     self.hass.config_entries.flow.async_init(

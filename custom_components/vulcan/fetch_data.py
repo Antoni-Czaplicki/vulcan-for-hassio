@@ -3,7 +3,7 @@ import datetime
 from datetime import timedelta
 
 
-async def get_lesson_info(client, date_from=None, date_to=None, type_="dict"):
+async def get_lessons(client, date_from=None, date_to=None, type_="dict"):
     dict_ans = {}
     changes = {}
     list_ans = []
@@ -101,6 +101,7 @@ async def get_lesson_info(client, date_from=None, date_to=None, type_="dict"):
 
 
 async def get_student_info(client, student_id):
+    """Support for fetching Student info by student id."""
     student_info = {}
     for student in await client.get_students():
         if str(student.pupil.id) == str(student_id):
