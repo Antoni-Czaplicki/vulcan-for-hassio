@@ -11,14 +11,15 @@
 		 "expired_token": "Expired token - please generate a new token",
 		 "invalid_pin": "Invalid pin",
 		 "invalid_symbol": "Invalid symbol",
-		 "expired_credentials": "Expired credentials - please create new on Vulcan mobile app registration page"
+		 "expired_credentials": "Expired credentials - please create new on Vulcan mobile app registration page",
+		 "cannot_connect": "Connection error - please check your internet connection"
       },
       "step":{
-         "user":{
+         "auth":{
             "description":"Login to your Vulcan Account using mobile app registration page.",
             "data":{
                "token":"Token",
-               "symbol":"Symbol",
+               "region":"Symbol",
                "pin":"Pin"
             }
          },
@@ -26,7 +27,7 @@
             "description":"Login to your Vulcan Account using mobile app registration page.",
             "data":{
                "token":"Token",
-               "symbol":"Symbol",
+               "region":"Symbol",
                "pin":"Pin"
             }
          },
@@ -42,7 +43,7 @@
                "credentials":"Login"
             }
          },
-         "add_student":{
+         "add_next_config_entry":{
             "description":"Add another student.",
             "data":{
                "use_saved_credentials":"Use saved credentials"

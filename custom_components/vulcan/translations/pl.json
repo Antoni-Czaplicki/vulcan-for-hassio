@@ -6,15 +6,16 @@
 		 "reauth_successful":"Zalogowano pomyślnie"
       },
       "error":{
-		 "unknown":"Wystąpił nieoczekiwany błąd - sprawdź logi po więcej szczegółów",
-		 "invalid_token":"Niepoprawny token",
-		 "expired_token":"Token utracił ważność - prosimy wygenerować nowy token",
-		 "invalid_pin":"Niepoprawny pin",
-		 "invalid_symbol":"Niepoprawny symbol",
-		 "expired_credentials": "Te dane logowania utraciły ważność - wygeneruj nowe na stronie dodawania aplikacji Vulcan."
+		 "unknown": "Wystąpił nieoczekiwany błąd - sprawdź logi po więcej szczegółów",
+		 "invalid_token": "Niepoprawny token",
+		 "expired_token": "Token utracił ważność - prosimy wygenerować nowy token",
+		 "invalid_pin": "Niepoprawny pin",
+		 "invalid_symbol": "Niepoprawny symbol",
+		 "expired_credentials": "Te dane logowania utraciły ważność - wygeneruj nowe na stronie dodawania aplikacji Vulcan.",
+		 "cannot_connect": "Nie można połączyć się z internetem - sprawdź swoje połączenie"
       },
       "step":{
-         "user":{
+         "auth":{
             "description":"Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
             "data":{
                "token":"Token",
@@ -42,7 +43,7 @@
                "credentials":"Login"
             }
          },
-         "add_student":{
+         "add_next_config_entry":{
             "description":"Dodaj kolejnego ucznia.",
             "data":{
                "use_saved_credentials":"Użyj zapisanych danych logowania"
