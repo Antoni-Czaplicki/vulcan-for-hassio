@@ -2,7 +2,8 @@
   "domain": "vulcan",
   "name": "Uonet+ Vulcan",
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/vulcan",
+  "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
+  "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
   "requirements": [
     "vulcan-api==2.0.0"
   ],
