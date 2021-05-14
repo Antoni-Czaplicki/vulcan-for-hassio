@@ -12,7 +12,12 @@ from vulcan import Account, Keystore, Vulcan
 from vulcan._utils import VulcanAPIException
 
 from . import DOMAIN
-from .const import DEFAULT_SCAN_INTERVAL, CONF_ATTENDANCE_NOTIFY, CONF_GRADE_NOTIFY, CONF_MESSAGE_NOTIFY
+from .const import (
+    CONF_ATTENDANCE_NOTIFY,
+    CONF_GRADE_NOTIFY,
+    CONF_MESSAGE_NOTIFY,
+    DEFAULT_SCAN_INTERVAL,
+)
 from .register import register
 
 _LOGGER = logging.getLogger(__name__)
