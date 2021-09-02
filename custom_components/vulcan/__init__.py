@@ -2,13 +2,12 @@
 import logging
 
 from aiohttp import ClientConnectorError
-from vulcan import Account, Keystore, Vulcan
-from vulcan._utils import VulcanAPIException
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import Entity
+from vulcan import Account, Keystore, Vulcan
+from vulcan._utils import VulcanAPIException
 
 from .const import DOMAIN
 
