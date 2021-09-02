@@ -5,11 +5,8 @@
   "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
   "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
   "requirements": [
-    "vulcan-api==2.0.0"
+    "vulcan-api==2.0.1"
   ],
-  "ssdp": [],
-  "zeroconf": [],
-  "homekit": {},
   "dependencies": [],
   "codeowners": [
     "@Antoni-Czaplicki"
