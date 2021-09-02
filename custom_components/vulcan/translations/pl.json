@@ -1,69 +1,69 @@
 {
-   "config":{
-      "abort":{
-         "already_configured":"Ten uczeń został już dodany.",
-         "all_student_already_configured":"Wszyscy uczniowie z tego konta zostali już dodani.",
-		 "reauth_successful":"Zalogowano pomyślnie"
+  "config": {
+    "abort": {
+      "already_configured": "Ten uczeń został już dodany.",
+      "all_student_already_configured": "Wszyscy uczniowie z tego konta zostali już dodani.",
+      "reauth_successful": "Zalogowano pomyślnie"
+    },
+    "error": {
+      "unknown": "Wystąpił nieoczekiwany błąd - sprawdź logi po więcej szczegółów",
+      "invalid_token": "Niepoprawny token",
+      "expired_token": "Token utracił ważność - prosimy wygenerować nowy token",
+      "invalid_pin": "Niepoprawny pin",
+      "invalid_symbol": "Niepoprawny symbol",
+      "expired_credentials": "Te dane logowania utraciły ważność - wygeneruj nowe na stronie dodawania aplikacji Vulcan.",
+      "cannot_connect": "Nie można połączyć się z internetem - sprawdź swoje połączenie"
+    },
+    "step": {
+      "auth": {
+        "description": "Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
+        "data": {
+          "token": "Token",
+          "region": "Symbol",
+          "pin": "Pin"
+        }
       },
-      "error":{
-		 "unknown": "Wystąpił nieoczekiwany błąd - sprawdź logi po więcej szczegółów",
-		 "invalid_token": "Niepoprawny token",
-		 "expired_token": "Token utracił ważność - prosimy wygenerować nowy token",
-		 "invalid_pin": "Niepoprawny pin",
-		 "invalid_symbol": "Niepoprawny symbol",
-		 "expired_credentials": "Te dane logowania utraciły ważność - wygeneruj nowe na stronie dodawania aplikacji Vulcan.",
-		 "cannot_connect": "Nie można połączyć się z internetem - sprawdź swoje połączenie"
+      "reauth": {
+        "description": "Zaloguj się ponownie do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
+        "data": {
+          "token": "Token",
+          "region": "Symbol",
+          "pin": "Pin"
+        }
       },
-      "step":{
-         "auth":{
-            "description":"Zaloguj się do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
-            "data":{
-               "token":"Token",
-               "region":"Symbol",
-               "pin":"Pin"
-            }
-         },
-         "reauth":{
-            "description":"Zaloguj się ponownie do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
-            "data":{
-               "token":"Token",
-               "region":"Symbol",
-               "pin":"Pin"
-            }
-         },
-         "select_student":{
-            "description":"Wybierz ucznia, możesz później dodać kolejnych dodając integrację jeszcze raz.",
-            "data":{
-               "student":"Uczeń"
-            }
-         },
-         "select_saved_credentials":{
-            "description":"Wybierz zapisane dane logowania.",
-            "data":{
-               "credentials":"Login"
-            }
-         },
-         "add_next_config_entry":{
-            "description":"Dodaj kolejnego ucznia.",
-            "data":{
-               "use_saved_credentials":"Użyj zapisanych danych logowania"
-            }
-         }
+      "select_student": {
+        "description": "Wybierz ucznia, możesz później dodać kolejnych dodając integrację jeszcze raz.",
+        "data": {
+          "student": "Uczeń"
+        }
+      },
+      "select_saved_credentials": {
+        "description": "Wybierz zapisane dane logowania.",
+        "data": {
+          "credentials": "Login"
+        }
+      },
+      "add_next_config_entry": {
+        "description": "Dodaj kolejnego ucznia.",
+        "data": {
+          "use_saved_credentials": "Użyj zapisanych danych logowania"
+        }
       }
-   },
-   "options":{
-      "error":{
-         "error":"Wystąpił Błąd"
-      },
-      "step":{
-         "init":{
-            "data":{
-               "message_notify":"Pokazuj powiadomienia o najnowszych wiadomościach",
-               "attendance_notify":"Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
-               "grade_notify":"Pokazuj powiadomienia o najnowszych ocenach",
-               "scan_interval":"Częstotliwość aktualizacji (w minutach)"
-            }
-         }
+    }
+  },
+  "options": {
+    "error": {
+      "error": "Wystąpił Błąd"
+    },
+    "step": {
+      "init": {
+        "data": {
+          "message_notify": "Pokazuj powiadomienia o najnowszych wiadomościach",
+          "attendance_notify": "Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
+          "grade_notify": "Pokazuj powiadomienia o najnowszych ocenach",
+          "scan_interval": "Częstotliwość aktualizacji (w minutach)"
+        }
       }
-   }
+    }
+  }
 }
