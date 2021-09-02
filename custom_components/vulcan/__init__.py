@@ -2,12 +2,13 @@
 import logging
 
 from aiohttp import ClientConnectorError
+from vulcan import Account, Keystore, Vulcan
+from vulcan._utils import VulcanAPIException
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import Entity
-from vulcan import Account, Keystore, Vulcan
-from vulcan._utils import VulcanAPIException
 
 from .const import DOMAIN
 
@@ -20,10 +21,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up Uonet+ Vulcan integration."""
     hass.data.setdefault(DOMAIN, {})
     try:
-        with open(f".vulcan/keystore-{entry.data.get('login')}.json") as file:
-            keystore = Keystore.load(file)
-        with open(f".vulcan/account-{entry.data.get('login')}.json") as file:
-            account = Account.load(file)
+        keystore = Keystore.load(entry.data.get("keystore"))
+        account = Account.load(entry.data.get("account"))
         client = Vulcan(keystore, account)
         await client.select_student()
         students = await client.get_students()
