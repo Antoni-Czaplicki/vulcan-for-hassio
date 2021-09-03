@@ -98,8 +98,6 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
     _LOGGER.debug("Migrating from version %s", config_entry.version)
 
     if config_entry.version == 1:
-        import shutil
-
         try:
             with open(
                 f".vulcan/keystore-{config_entry.data.get('login')}.json"
@@ -118,9 +116,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
                 )
             )
             config_entry.version = 2
-            shutil.rmtree(".vulcan")
             return False
-        shutil.rmtree(".vulcan")
 
         data = {
             "student_id": config_entry.data["student_id"],
