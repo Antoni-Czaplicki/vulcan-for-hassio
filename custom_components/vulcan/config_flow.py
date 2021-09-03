@@ -7,6 +7,7 @@ from aiohttp import ClientConnectionError
 from homeassistant import config_entries
 from homeassistant.const import CONF_PIN, CONF_REGION, CONF_SCAN_INTERVAL, CONF_TOKEN
 from homeassistant.core import callback
+
 from vulcan import Account, Keystore, Vulcan
 from vulcan._utils import VulcanAPIException
 
@@ -31,7 +32,7 @@ LOGIN_SCHEMA = {
 class VulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a Uonet+ Vulcan config flow."""
 
-    VERSION = 1
+    VERSION = 2
 
     @staticmethod
     @callback

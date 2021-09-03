@@ -9,6 +9,7 @@ from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.template import DATE_STR_FORMAT
 from homeassistant.util import Throttle, dt
+
 from vulcan._utils import VulcanAPIException
 
 from . import DOMAIN

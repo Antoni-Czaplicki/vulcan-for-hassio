@@ -76,7 +76,7 @@ async def get_lessons(client, date_from=None, date_to=None, type_="dict"):
             temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
         if temp_dict["visible"]:
             if type_ == "dict":
-                dict_ans[f"lesson_{lesson}"] = temp_dict
+                dict_ans[f"lesson_{lesson.time.position}"] = temp_dict
             elif type_ == "list":
                 list_ans.append(temp_dict)
 

@@ -6,6 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import Entity
+
 from vulcan import Account, Keystore, Vulcan
 from vulcan._utils import VulcanAPIException
 
@@ -91,6 +92,49 @@ async def async_unload_entry(hass, entry):
 async def _async_update_options(hass, entry):
     """Update options."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.debug("Migrating from version %s", config_entry.version)
+
+    if config_entry.version == 1:
+        import shutil
+
+        try:
+            with open(
+                f".vulcan/keystore-{config_entry.data.get('login')}.json"
+            ) as file:
+                keystore_old = Keystore.load(file)
+            with open(f".vulcan/account-{config_entry.data.get('login')}.json") as file:
+                account_old = Account.load(file)
+        except:
+            _LOGGER.error(
+                "Migration to config version 2 unsuccessful, please reconfigure integration"
+            )
+            hass.async_create_task(
+                hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": "reauth"},
+                )
+            )
+            config_entry.version = 2
+            shutil.rmtree(".vulcan")
+            return False
+        shutil.rmtree(".vulcan")
+
+        data = {
+            "student_id": config_entry.data["student_id"],
+            "keystore": keystore_old.as_dict,
+            "account": account_old.as_dict,
+        }
+
+        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=data)
+
+    _LOGGER.info("Migration to version %s successful", config_entry.version)
+
+    return True
 
 
 class VulcanEntity(Entity):
