@@ -32,7 +32,6 @@ async def get_lessons(client, date_from=None, date_to=None, type_="dict"):
         )
 
         changes[str(_id)] = temp_dict
-
     async for lesson in await client.data.get_lessons(
         date_from=date_from, date_to=date_to
     ):
@@ -63,23 +62,25 @@ async def get_lessons(client, date_from=None, date_to=None, type_="dict"):
         elif temp_dict["changes"].type == 1:
             temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
             temp_dict["changes_info"] = f"Lekcja odwołana ({temp_dict['lesson']})"
-            temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
+            if str(temp_dict["changes"].id) in changes:
+                temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
         elif temp_dict["changes"].type == 2:
             temp_dict["lesson"] = f"{temp_dict['lesson']} (Zastępstwo)"
-            temp_dict["teacher"] = changes[str(temp_dict["changes"].id)]["teacher"]
-            temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
+            if str(temp_dict["changes"].id) in changes:
+                temp_dict["teacher"] = changes[str(temp_dict["changes"].id)]["teacher"]
+                temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
         # elif temp_dict["changes"].type == 3:
         # temp_dict["lesson"] = f"Lekcja przeniesiona ({temp_dict['lesson']})"
         # temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
         elif temp_dict["changes"].type == 4:
             temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
-            temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
+            if str(temp_dict["changes"].id) in changes:
+                temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
         if temp_dict["visible"]:
             if type_ == "dict":
                 dict_ans[f"lesson_{lesson.time.position}"] = temp_dict
             elif type_ == "list":
                 list_ans.append(temp_dict)
-
     if type_ == "dict":
         for num in range(10):
             if not f"lesson_{str(num + 1)}" in dict_ans:
@@ -141,7 +142,6 @@ async def get_latest_attendance(client):
                 "lesson_time"
             ] = f"{attendance.time.from_.strftime('%H:%M')}-{attendance.time.to.strftime('%H:%M')}"
             latest_attendance["datetime"] = attendance.date_modified.date_time
-
     if latest_attendance == {}:
         latest_attendance = {
             "content": "-",
@@ -151,7 +151,6 @@ async def get_latest_attendance(client):
             "lesson_time": "-",
             "datetime": "-",
         }
-
     return latest_attendance
 
 
@@ -167,7 +166,6 @@ async def get_latest_grade(client):
         latest_grade["teacher"] = grade.teacher_created.display_name
         latest_grade["subject"] = grade.column.subject.name
         latest_grade["date"] = grade.date_created.date.strftime("%d.%m.%Y")
-
     if latest_grade == {}:
         latest_grade = {
             "content": "-",
@@ -178,7 +176,6 @@ async def get_latest_grade(client):
             "teacher": "-",
             "value": 0,
         }
-
     return latest_grade
 
 
@@ -197,7 +194,6 @@ async def get_next_homework(client):
                 next_homework["date"] = homework.deadline.date.strftime("%d.%m.%Y")
                 if homework.content != None:
                     break
-
     if next_homework == {}:
         next_homework = {
             "description": "Brak zadań domowych",
@@ -205,7 +201,6 @@ async def get_next_homework(client):
             "teacher": "-",
             "date": "-",
         }
-
     return next_homework
 
 
@@ -227,7 +222,6 @@ async def get_next_exam(client):
                 next_exam["date"] = exam.deadline.date.strftime("%d.%m.%Y")
                 if exam.type != None:
                     break
-
     if next_exam == {}:
         next_exam = {
             "description": "Brak sprawdzianów",
@@ -236,7 +230,6 @@ async def get_next_exam(client):
             "teacher": "-",
             "date": "-",
         }
-
     return next_exam
 
 
@@ -253,7 +246,6 @@ async def get_latest_message(client):
         latest_message[
             "date"
         ] = f"{message.sent_date.time.strftime('%H:%M')} {message.sent_date.date.strftime('%d.%m.%Y')}"
-
     if latest_message == {}:
         latest_message = {
             "id": 0,
@@ -262,5 +254,4 @@ async def get_latest_message(client):
             "date": "-",
             "sender": "-",
         }
-
     return latest_message
