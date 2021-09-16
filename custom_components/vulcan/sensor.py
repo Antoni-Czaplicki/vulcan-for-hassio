@@ -1,7 +1,6 @@
 """Support for Vulcan sensors."""
 import datetime
 from datetime import timedelta
-from homeassistant.helpers.entity import generate_entity_id
 
 import async_timeout
 from aiohttp import ClientConnectorError
@@ -9,6 +8,7 @@ from homeassistant.components import persistent_notification
 from homeassistant.components.sensor import ENTITY_ID_FORMAT
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.exceptions import PlatformNotReady
+from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
