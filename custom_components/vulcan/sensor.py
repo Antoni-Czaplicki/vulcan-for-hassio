@@ -1,10 +1,12 @@
 """Support for Vulcan sensors."""
 import datetime
 from datetime import timedelta
+from homeassistant.helpers.entity import generate_entity_id
 
 import async_timeout
 from aiohttp import ClientConnectorError
 from homeassistant.components import persistent_notification
+from homeassistant.components.sensor import ENTITY_ID_FORMAT
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.update_coordinator import (
@@ -112,24 +114,96 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         raise PlatformNotReady
 
     entities = [
-        LatestGrade(client, data),
-        LuckyNumber(client, data),
-        LatestAttendance(client, data),
-        LatestMessage(client, data),
-        NextHomework(client, data),
-        NextExam(client, data),
+        LatestGrade(
+            client,
+            data,
+            generate_entity_id(
+                ENTITY_ID_FORMAT,
+                f"latest_grade_{data['student_info']['full_name']}",
+                hass=hass,
+            ),
+        ),
+        LuckyNumber(
+            client,
+            data,
+            generate_entity_id(
+                ENTITY_ID_FORMAT,
+                f"lucky_number_{data['student_info']['full_name']}",
+                hass=hass,
+            ),
+        ),
+        LatestAttendance(
+            client,
+            data,
+            generate_entity_id(
+                ENTITY_ID_FORMAT,
+                f"latest_attendance_{data['student_info']['full_name']}",
+                hass=hass,
+            ),
+        ),
+        LatestMessage(
+            client,
+            data,
+            generate_entity_id(
+                ENTITY_ID_FORMAT,
+                f"latest_message_{data['student_info']['full_name']}",
+                hass=hass,
+            ),
+        ),
+        NextHomework(
+            client,
+            data,
+            generate_entity_id(
+                ENTITY_ID_FORMAT,
+                f"next_homework_{data['student_info']['full_name']}",
+                hass=hass,
+            ),
+        ),
+        NextExam(
+            client,
+            data,
+            generate_entity_id(
+                ENTITY_ID_FORMAT,
+                f"next_exam_{data['student_info']['full_name']}",
+                hass=hass,
+            ),
+        ),
     ]
     for i in range(10):
-        entities.append(VulcanLessonEntity(coordinator, data, i + 1))
+        entities.append(
+            VulcanLessonEntity(
+                coordinator,
+                data,
+                i + 1,
+                generate_entity_id(
+                    ENTITY_ID_FORMAT,
+                    f"lesson_{i + 1}_{data['student_info']['full_name']}",
+                    hass=hass,
+                ),
+            )
+        )
     for i in range(10):
-        entities.append(VulcanLessonEntity(coordinator, data, i + 1, True))
+        entities.append(
+            VulcanLessonEntity(
+                coordinator,
+                data,
+                i + 1,
+                generate_entity_id(
+                    ENTITY_ID_FORMAT,
+                    f"lesson_{i + 1}_tomorrow_{data['student_info']['full_name']}",
+                    hass=hass,
+                ),
+                True,
+            )
+        )
 
     async_add_entities(entities)
 
 
 class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
-    def __init__(self, coordinator, data, number, is_tomorrow=False):
+    def __init__(self, coordinator, data, number, entity_id, is_tomorrow=False):
         super().__init__(coordinator)
+        self.entity_id = entity_id
         self.is_tomorrow = is_tomorrow
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
@@ -217,7 +291,8 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
 
 
 class LatestAttendance(VulcanEntity):
-    def __init__(self, client, data):
+    def __init__(self, client, data, entity_id):
+        self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
         self.student_id = str(self.student_info["id"])
@@ -280,7 +355,8 @@ class LatestAttendance(VulcanEntity):
 
 
 class LatestMessage(VulcanEntity):
-    def __init__(self, client, data):
+    def __init__(self, client, data, entity_id):
+        self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
         self.latest_message = data["message"]
@@ -340,7 +416,8 @@ class LatestMessage(VulcanEntity):
 
 
 class LatestGrade(VulcanEntity):
-    def __init__(self, client, data):
+    def __init__(self, client, data, entity_id):
+        self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
         self.latest_grade = data["grade"]
@@ -403,7 +480,8 @@ class LatestGrade(VulcanEntity):
 
 
 class NextHomework(VulcanEntity):
-    def __init__(self, client, data):
+    def __init__(self, client, data, entity_id):
+        self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
@@ -450,7 +528,8 @@ class NextHomework(VulcanEntity):
 
 
 class NextExam(VulcanEntity):
-    def __init__(self, client, data):
+    def __init__(self, client, data, entity_id):
+        self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
@@ -498,7 +577,8 @@ class NextExam(VulcanEntity):
 
 
 class LuckyNumber(VulcanEntity):
-    def __init__(self, client, data):
+    def __init__(self, client, data, entity_id):
+        self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
         self.student_name = self.student_info["full_name"]
