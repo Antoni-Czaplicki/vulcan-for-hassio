@@ -60,6 +60,7 @@
         "data": {
           "message_notify": "Show notifications when new message received",
           "attendance_notify": "Show notifications about the latest attendance entries",
+          "lesson_entities_number": "Number of lesson entities that will be created (0 for disabled)",
           "grade_notify": "Show notifications about the latest grades",
           "scan_interval": "Update interval (in minutes)"
         }
