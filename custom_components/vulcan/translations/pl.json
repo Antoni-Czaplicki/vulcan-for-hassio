@@ -60,6 +60,7 @@
         "data": {
           "message_notify": "Pokazuj powiadomienia o najnowszych wiadomościach",
           "attendance_notify": "Pokazuj powiadomienia o najnowszych nieobecnościach i innych wpisach frekwencji",
+          "lesson_entities_number": "Liczba encji planu lekcji które są tworzone w Home Assistant (wpisz 0 aby wyłączyć wszystkie encje)",
           "grade_notify": "Pokazuj powiadomienia o najnowszych ocenach",
           "scan_interval": "Częstotliwość aktualizacji (w minutach)"
         }
