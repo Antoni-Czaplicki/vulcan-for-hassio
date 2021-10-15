@@ -3,7 +3,7 @@ import datetime
 from datetime import timedelta
 
 
-async def get_lessons(client, date_from=None, date_to=None, type_="dict"):
+async def get_lessons(client, date_from=None, date_to=None, type_="dict", entities_number=10):
     """Support for fetching Vulcan lessons."""
     dict_ans = {}
     changes = {}
@@ -82,7 +82,7 @@ async def get_lessons(client, date_from=None, date_to=None, type_="dict"):
             elif type_ == "list":
                 list_ans.append(temp_dict)
     if type_ == "dict":
-        for num in range(10):
+        for num in range(entities_number):
             if not f"lesson_{str(num + 1)}" in dict_ans:
                 dict_ans[f"lesson_{str(num + 1)}"] = {
                     "number": num + 1,

@@ -14,7 +14,9 @@ from . import DOMAIN
 from .const import (
     CONF_ATTENDANCE_NOTIFY,
     CONF_GRADE_NOTIFY,
+    CONF_LESSON_ENTITIES_NUMBER,
     CONF_MESSAGE_NOTIFY,
+    DEFAULT_LESSON_ENTITIES_NUMBER,
     DEFAULT_SCAN_INTERVAL,
 )
 from .register import register
@@ -353,6 +355,12 @@ class VulcanOptionsFlowHandler(config_entries.OptionsFlow):
                 CONF_SCAN_INTERVAL,
                 default=self.config_entry.options.get(
                     CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                ),
+            ): cv.positive_int,
+            vol.Optional(
+                CONF_LESSON_ENTITIES_NUMBER,
+                default=self.config_entry.options.get(
+                    CONF_LESSON_ENTITIES_NUMBER, DEFAULT_LESSON_ENTITIES_NUMBER
                 ),
             ): cv.positive_int,
         }
