@@ -20,7 +20,9 @@ from . import _LOGGER, DOMAIN, VulcanEntity
 from .const import (
     CONF_ATTENDANCE_NOTIFY,
     CONF_GRADE_NOTIFY,
+    CONF_LESSON_ENTITIES_NUMBER,
     CONF_MESSAGE_NOTIFY,
+    DEFAULT_LESSON_ENTITIES_NUMBER,
     DEFAULT_SCAN_INTERVAL,
     PARALLEL_UPDATES,
 )
@@ -52,10 +54,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             async with async_timeout.timeout(30):
                 return {
                     "lessons": await get_lessons(
-                        client, date_from=datetime.date.today()
+                        client,
+                        date_from=datetime.date.today(),
+                        entities_number=config_entry.options.get(
+                            CONF_LESSON_ENTITIES_NUMBER, DEFAULT_LESSON_ENTITIES_NUMBER
+                        ),
                     ),
                     "lessons_t": await get_lessons(
-                        client, date_from=datetime.date.today() + timedelta(days=1)
+                        client,
+                        date_from=datetime.date.today() + timedelta(days=1),
+                        entities_number=config_entry.options.get(
+                            CONF_LESSON_ENTITIES_NUMBER, DEFAULT_LESSON_ENTITIES_NUMBER
+                        ),
                     ),
                 }
         except VulcanAPIException as err:
@@ -169,7 +179,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             ),
         ),
     ]
-    for i in range(10):
+    for i in config_entry.options.get(
+        CONF_LESSON_ENTITIES_NUMBER, DEFAULT_LESSON_ENTITIES_NUMBER
+    ):
         entities.append(
             VulcanLessonEntity(
                 coordinator,
@@ -182,7 +194,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                 ),
             )
         )
-    for i in range(10):
         entities.append(
             VulcanLessonEntity(
                 coordinator,
