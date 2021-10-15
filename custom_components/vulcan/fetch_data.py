@@ -3,7 +3,9 @@ import datetime
 from datetime import timedelta
 
 
-async def get_lessons(client, date_from=None, date_to=None, type_="dict", entities_number=10):
+async def get_lessons(
+    client, date_from=None, date_to=None, type_="dict", entities_number=10
+):
     """Support for fetching Vulcan lessons."""
     dict_ans = {}
     changes = {}
