@@ -179,8 +179,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             ),
         ),
     ]
-    for i in config_entry.options.get(
-        CONF_LESSON_ENTITIES_NUMBER, DEFAULT_LESSON_ENTITIES_NUMBER
+    for i in range(
+        config_entry.options.get(
+            CONF_LESSON_ENTITIES_NUMBER, DEFAULT_LESSON_ENTITIES_NUMBER
+        )
     ):
         entities.append(
             VulcanLessonEntity(
