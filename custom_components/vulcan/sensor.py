@@ -243,7 +243,7 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
             self.device_name_tomorrow = ""
             self.num_tomorrow = timedelta(days=0)
 
-        if number == 10:
+        if number >= 10:
             space = chr(160)
         else:
             space = " "
