@@ -1,15 +1,18 @@
 """Support for Vulcan Calendar platform."""
 import copy
-import logging
 from datetime import date, datetime, timedelta
+import logging
 
 from aiohttp import ClientConnectorError
+from vulcan._utils import VulcanAPIException
+
 from homeassistant.components.calendar import ENTITY_ID_FORMAT, CalendarEventDevice
 from homeassistant.const import CONF_SCAN_INTERVAL
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.template import DATE_STR_FORMAT
 from homeassistant.util import Throttle, dt
-from vulcan._utils import VulcanAPIException
 
 from . import DOMAIN
 from .const import DEFAULT_SCAN_INTERVAL
@@ -17,16 +20,11 @@ from .fetch_data import get_lessons, get_student_info
 
 _LOGGER = logging.getLogger(__name__)
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
-
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the calendar platform for event devices."""
-    global MIN_TIME_BETWEEN_UPDATES  # pylint: disable=global-statement
-    MIN_TIME_BETWEEN_UPDATES = (
-        timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL))
-        if config_entry.options.get(CONF_SCAN_INTERVAL) is not None
-        else MIN_TIME_BETWEEN_UPDATES
+    VulcanCalendarData.MIN_TIME_BETWEEN_UPDATES = timedelta(
+        minutes=config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     )
     client = hass.data[DOMAIN][config_entry.entry_id]
     data = {
@@ -66,38 +64,25 @@ class VulcanCalendarEventDevice(CalendarEventDevice):
         self._unique_id = f"vulcan_calendar_{self.student_info['id']}"
 
         if data["students_number"] == 1:
-            name = ""
+            self._attr_name = "Vulcan calendar"
             self.device_name = "Calendar"
         else:
-            name = f" - {self.student_info['full_name']}"
+            self._attr_name = f"Vulcan calendar - {self.student_info['full_name']}"
             self.device_name = f"{self.student_info['full_name']}: Calendar"
-        self._name = f"Vulcan calendar{name}"
-
-    @property
-    def unique_id(self):
-        """Return unique id."""
-        return self._unique_id
-
-    @property
-    def device_info(self):
-        """Return device info."""
-        return {
+        self._attr_unique_id = f"vulcan_calendar_{self.student_info['id']}"
+        self._attr_device_info = {
             "identifiers": {(DOMAIN, f"calendar_{self.student_info['id']}")},
-            "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "entry_type": DeviceEntryType.SERVICE,
             "name": self.device_name,
-            "entry_type": "service",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
+            "manufacturer": "Uonet +",
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
     @property
     def event(self):
         """Return the next upcoming event."""
         return self._event
-
-    @property
-    def name(self):
-        """Return the name of the entity."""
-        return self._name
 
     async def async_get_events(self, hass, start_date, end_date):
         """Get all events in a specific time frame."""
@@ -126,6 +111,8 @@ class VulcanCalendarEventDevice(CalendarEventDevice):
 class VulcanCalendarData:
     """Class to utilize calendar service object to get next event."""
 
+    MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
+
     def __init__(self, client, student_info, hass):
         """Set up how we are going to search the Vulcan calendar."""
         self.client = client
@@ -141,21 +128,14 @@ class VulcanCalendarData:
                 self.client,
                 date_from=start_date,
                 date_to=end_date,
-                type_="list",
             )
         except VulcanAPIException as err:
             if str(err) == "The certificate is not authorized.":
                 _LOGGER.error(
                     "The certificate is not authorized, please authorize integration again"
                 )
-                hass.async_create_task(
-                    hass.config_entries.flow.async_init(
-                        DOMAIN,
-                        context={"source": "reauth"},
-                    )
-                )
-            else:
-                _LOGGER.error("An API error has occurred: %s", err)
+                raise ConfigEntryAuthFailed from err
+            _LOGGER.error("An API error has occurred: %s", err)
             events = []
         except ClientConnectorError as err:
             if self._available:
@@ -192,7 +172,7 @@ class VulcanCalendarData:
         """Get the latest data."""
 
         try:
-            events = await get_lessons(self.client, type_="list")
+            events = await get_lessons(self.client)
 
             if not self._available:
                 _LOGGER.info("Restored connection with API")
@@ -202,7 +182,6 @@ class VulcanCalendarData:
                 events = await get_lessons(
                     self.client,
                     date_to=date.today() + timedelta(days=7),
-                    type_="list",
                 )
                 if events == []:
                     self.event = None
@@ -212,14 +191,8 @@ class VulcanCalendarData:
                 _LOGGER.error(
                     "The certificate is not authorized, please authorize integration again"
                 )
-                self.hass.async_create_task(
-                    self.hass.config_entries.flow.async_init(
-                        DOMAIN,
-                        context={"source": "reauth"},
-                    )
-                )
-            else:
-                _LOGGER.error("An API error has occurred: %s", err)
+                raise ConfigEntryAuthFailed from err
+            _LOGGER.error("An API error has occurred: %s", err)
             return
         except ClientConnectorError as err:
             if self._available:
