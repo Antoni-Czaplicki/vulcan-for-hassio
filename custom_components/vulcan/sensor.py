@@ -8,6 +8,7 @@ from homeassistant.components import persistent_notification
 from homeassistant.components.sensor import ENTITY_ID_FORMAT
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.exceptions import PlatformNotReady
+from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -277,7 +278,7 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
         return True
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         lesson_info = self.coordinator.data[f"lessons{self.tomorrow}"][
             f"lesson_{self.number}"
         ]
@@ -297,9 +298,10 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
                 (DOMAIN, f"{self.tomorrow_device_id}timetable_{self.student_id}")
             },
             "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}{self.device_name_tomorrow}Timetable",
-            "entry_type": "service",
+            "entry_type": DeviceEntryType.SERVICE,
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
 
@@ -325,7 +327,7 @@ class LatestAttendance(VulcanEntity):
         self._icon = "mdi:account-check-outline"
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         att_info = self.latest_attendance
         atr = {
             "Lesson": att_info["lesson_name"],
@@ -341,9 +343,10 @@ class LatestAttendance(VulcanEntity):
         return {
             "identifiers": {(DOMAIN, f"attendance{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}Attendance",
-            "entry_type": "service",
+            "entry_type": DeviceEntryType.SERVICE,
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
     async def async_update(self):
@@ -388,7 +391,7 @@ class LatestMessage(VulcanEntity):
         self._icon = "mdi:message-arrow-left-outline"
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         msg_info = self.latest_message
         atr = {
             "Sender": msg_info["sender"],
@@ -403,9 +406,10 @@ class LatestMessage(VulcanEntity):
         return {
             "identifiers": {(DOMAIN, f"message{self.student_info['id']}")},
             "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}Messages",
-            "entry_type": "service",
+            "entry_type": DeviceEntryType.SERVICE,
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
     async def async_update(self):
@@ -451,7 +455,7 @@ class LatestGrade(VulcanEntity):
         self._icon = "mdi:school-outline"
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         grade_info = self.latest_grade
         atr = {
             "subject": grade_info["subject"],
@@ -467,9 +471,10 @@ class LatestGrade(VulcanEntity):
         return {
             "identifiers": {(DOMAIN, f"grade{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}Grades",
-            "entry_type": "service",
+            "entry_type": DeviceEntryType.SERVICE,
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
     async def async_update(self):
@@ -514,7 +519,7 @@ class NextHomework(VulcanEntity):
         self._icon = "mdi:pen"
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         atr = {
             "subject": self.next_homework["subject"],
             "teacher": self.next_homework["teacher"],
@@ -527,9 +532,10 @@ class NextHomework(VulcanEntity):
         return {
             "identifiers": {(DOMAIN, f"homework{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}Homeworks",
-            "entry_type": "service",
+            "entry_type": DeviceEntryType.SERVICE,
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
     async def async_update(self):
@@ -562,7 +568,7 @@ class NextExam(VulcanEntity):
         self._icon = "mdi:format-list-checks"
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         atr = {
             "subject": self.next_exam["subject"],
             "type": self.next_exam["type"],
@@ -576,9 +582,10 @@ class NextExam(VulcanEntity):
         return {
             "identifiers": {(DOMAIN, f"exam{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}Exam",
-            "entry_type": "service",
+            "entry_type": DeviceEntryType.SERVICE,
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
     async def async_update(self):
@@ -611,7 +618,7 @@ class LuckyNumber(VulcanEntity):
         self._icon = "mdi:ticket-confirmation-outline"
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         atr = {
             "date": self.lucky_number["date"],
         }
@@ -622,9 +629,10 @@ class LuckyNumber(VulcanEntity):
         return {
             "identifiers": {(DOMAIN, f"lucky_number{self.student_id}")},
             "manufacturer": "Uonet +",
-            "model": f"{self.student_info['class']} {self.student_info['school']}",
+            "model": f"{self.student_info['full_name']} - {self.student_info['class']} {self.student_info['school']}",
             "name": f"{self.device_student_name}Lucky Number",
-            "entry_type": "service",
+            "entry_type": DeviceEntryType.SERVICE,
+            "configuration_url": f"https://uonetplus.vulcan.net.pl/{self.student_info['symbol']}",
         }
 
     async def async_update(self):
