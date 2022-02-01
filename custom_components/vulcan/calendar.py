@@ -127,6 +127,7 @@ class VulcanCalendarData:
                 self.client,
                 date_from=start_date,
                 date_to=end_date,
+                type_="list",
             )
         except VulcanAPIException as err:
             if str(err) == "The certificate is not authorized.":
@@ -171,7 +172,7 @@ class VulcanCalendarData:
         """Get the latest data."""
 
         try:
-            events = await get_lessons(self.client)
+            events = await get_lessons(self.client, type_="list")
 
             if not self._available:
                 _LOGGER.info("Restored connection with API")
@@ -181,6 +182,7 @@ class VulcanCalendarData:
                 events = await get_lessons(
                     self.client,
                     date_to=date.today() + timedelta(days=7),
+                    type_="list",
                 )
                 if events == []:
                     self.event = None
