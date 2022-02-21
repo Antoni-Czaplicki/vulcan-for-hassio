@@ -1,7 +1,7 @@
 # Uonet+ Vulcan integration for Home Assistant
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-![usage_badge](https://img.shields.io/badge/dynamic/json?style=flat-square&label=Usage&query=vulcan.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs) 
+![usage_badge](https://img.shields.io/badge/dynamic/json?style=for-the-badge&label=Usage&query=vulcan.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=vulcan)  
 View your vulcan data as Home Assistant sensors and use it in automations. You can add multiple students by adding integration again.
 
