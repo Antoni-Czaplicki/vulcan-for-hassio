@@ -158,7 +158,7 @@ class VulcanCalendarData:
                         item["date"], item["time"].to
                     ).strftime(DATE_STR_FORMAT)
                 },
-                "summary": item["lesson"] if item["lesson"] else "" ,
+                "summary": item["lesson"] if item["lesson"] else "",
                 "location": item["room"],
                 "description": item["teacher"],
             }
