@@ -3,7 +3,8 @@
     "abort": {
       "already_configured": "Ten uczeń został już dodany.",
       "all_student_already_configured": "Wszyscy uczniowie z tego konta zostali już dodani.",
-      "reauth_successful": "Zalogowano pomyślnie"
+      "reauth_successful": "Zalogowano pomyślnie",
+      "no_matching_entries": "Nie znaleziono pasujących wpisów, użyj innego konta lub usuń integrację z nieaktualnym uczniem."
     },
     "error": {
       "unknown": "Wystąpił nieoczekiwany błąd - sprawdź logi po więcej szczegółów",
@@ -23,7 +24,7 @@
           "pin": "Pin"
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "description": "Zaloguj się ponownie do konta Vulcan za pomocą opcji rejestracji aplikacji mobilnej.",
         "data": {
           "token": "Token",

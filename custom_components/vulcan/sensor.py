@@ -1,5 +1,6 @@
 """Support for Vulcan sensors."""
 import datetime
+import logging
 from datetime import timedelta
 
 import async_timeout
@@ -15,9 +16,9 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from vulcan._utils import VulcanAPIException
+from vulcan import UnauthorizedCertificateException
 
-from . import _LOGGER, DOMAIN, VulcanEntity
+from . import DOMAIN, VulcanEntity
 from .const import (
     CONF_ATTENDANCE_NOTIFY,
     CONF_GRADE_NOTIFY,
@@ -25,7 +26,6 @@ from .const import (
     CONF_MESSAGE_NOTIFY,
     DEFAULT_LESSON_ENTITIES_NUMBER,
     DEFAULT_SCAN_INTERVAL,
-    PARALLEL_UPDATES,
 )
 from .fetch_data import (
     get_latest_attendance,
@@ -39,6 +39,7 @@ from .fetch_data import (
 )
 
 SCAN_INTERVAL = timedelta(minutes=DEFAULT_SCAN_INTERVAL)
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -69,19 +70,16 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                         ),
                     ),
                 }
-        except VulcanAPIException as err:
-            if str(err) == "The certificate is not authorized.":
-                _LOGGER.error(
-                    "The certificate is not authorized, please authorize integration again."
+        except UnauthorizedCertificateException as err:
+            _LOGGER.error(
+                "The certificate is not authorized, please authorize integration again."
+            )
+            hass.async_create_task(
+                hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": "reauth"},
                 )
-                hass.async_create_task(
-                    hass.config_entries.flow.async_init(
-                        DOMAIN,
-                        context={"source": "reauth"},
-                    )
-                )
-            else:
-                raise UpdateFailed(f"Error communicating with API: {err}")
+            )
         except ClientConnectorError as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
         except Exception as err:
