@@ -133,9 +133,9 @@ class VulcanCalendarEntity(CalendarEntity):
                     date_to=date.today() + timedelta(days=7),
                     type_="list",
                 )
-                if events == []:
-                    self._event = None
-                    return
+            if events == []:
+                self._event = None
+                return
         except UnauthorizedCertificateException as err:
             raise ConfigEntryAuthFailed(
                 "The certificate is not authorized, please authorize integration again"

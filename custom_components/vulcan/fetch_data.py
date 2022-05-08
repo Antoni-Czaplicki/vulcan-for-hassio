@@ -13,27 +13,30 @@ async def get_lessons(
     async for lesson in await client.data.get_changed_lessons(
         date_from=date_from, date_to=date_to
     ):
-        temp_dict = {}
         _id = str(lesson.id)
-        temp_dict["id"] = lesson.id
-        temp_dict["number"] = lesson.time.position if lesson.time is not None else None
-        temp_dict["lesson"] = (
-            lesson.subject.name if lesson.subject is not None else None
-        )
-        temp_dict["room"] = lesson.room.code if lesson.room is not None else None
-        temp_dict["changes"] = lesson.changes
-        temp_dict["note"] = lesson.note
-        temp_dict["reason"] = lesson.reason
-        temp_dict["event"] = lesson.event
-        temp_dict["group"] = lesson.group
-        temp_dict["teacher"] = (
-            lesson.teacher.display_name if lesson.teacher is not None else None
-        )
-        temp_dict["from_to"] = (
-            lesson.time.displayed_time if lesson.time is not None else None
-        )
+        temp_dict = {
+            "id": lesson.id,
+            "number": lesson.time.position
+            if lesson.time is not None
+            else None,
+            "lesson": lesson.subject.name
+            if lesson.subject is not None
+            else None,
+            "room": lesson.room.code if lesson.room is not None else None,
+            "changes": lesson.changes,
+            "note": lesson.note,
+            "reason": lesson.reason,
+            "event": lesson.event,
+            "group": lesson.group,
+            "teacher": lesson.teacher.display_name
+            if lesson.teacher is not None
+            else None,
+            "from_to": lesson.time.displayed_time
+            if lesson.time is not None
+            else None,
+        }
 
-        changes[str(_id)] = temp_dict
+        changes[_id] = temp_dict
     async for lesson in await client.data.get_lessons(
         date_from=date_from, date_to=date_to
     ):
@@ -45,10 +48,7 @@ async def get_lessons(
         temp_dict["lesson"] = (
             lesson.subject.name if lesson.subject is not None else None
         )
-        if lesson.room is not None:
-            temp_dict["room"] = lesson.room.code
-        else:
-            temp_dict["room"] = "-"
+        temp_dict["room"] = lesson.room.code if lesson.room is not None else "-"
         temp_dict["visible"] = lesson.visible
         temp_dict["changes"] = lesson.changes
         temp_dict["group"] = lesson.group
@@ -78,14 +78,15 @@ async def get_lessons(
             temp_dict["lesson"] = f"Lekcja odwołana ({temp_dict['lesson']})"
             if str(temp_dict["changes"].id) in changes:
                 temp_dict["reason"] = changes[str(temp_dict["changes"].id)]["reason"]
-        if temp_dict["visible"]:
-            if type_ == "dict":
+        if type_ == "dict":
+            if temp_dict["visible"]:
                 dict_ans[f"lesson_{lesson.time.position}"] = temp_dict
-            elif type_ == "list":
+        elif type_ == "list":
+            if temp_dict["visible"]:
                 list_ans.append(temp_dict)
     if type_ == "dict":
         for num in range(entities_number):
-            if not f"lesson_{str(num + 1)}" in dict_ans:
+            if f"lesson_{str(num + 1)}" not in dict_ans:
                 dict_ans[f"lesson_{str(num + 1)}"] = {
                     "number": num + 1,
                     "lesson": "-",
@@ -97,7 +98,6 @@ async def get_lessons(
                     "changes": "-",
                     "reason": None,
                 }
-    if type_ == "dict":
         return dict_ans
     elif type_ == "list":
         return list_ans
@@ -146,7 +146,7 @@ async def get_latest_attendance(client):
                 "lesson_time"
             ] = f"{attendance.time.from_.strftime('%H:%M')}-{attendance.time.to.strftime('%H:%M')}"
             latest_attendance["datetime"] = attendance.date_modified.date_time
-    if latest_attendance == {}:
+    if not latest_attendance:
         latest_attendance = {
             "content": "-",
             "lesson_name": "-",
@@ -162,14 +162,16 @@ async def get_latest_grade(client):
     latest_grade = {}
 
     async for grade in await client.data.get_grades():
-        latest_grade = {}
-        latest_grade["content"] = grade.content
-        latest_grade["weight"] = grade.column.weight
-        latest_grade["description"] = grade.column.name
-        latest_grade["value"] = grade.value
-        latest_grade["teacher"] = grade.teacher_created.display_name
-        latest_grade["subject"] = grade.column.subject.name
-        latest_grade["date"] = grade.date_created.date.strftime("%d.%m.%Y")
+        latest_grade = {
+            "content": grade.content,
+            "weight": grade.column.weight,
+            "description": grade.column.name,
+            "value": grade.value,
+            "teacher": grade.teacher_created.display_name,
+            "subject": grade.column.subject.name,
+            "date": grade.date_created.date.strftime("%d.%m.%Y"),
+        }
+
     if latest_grade == {}:
         latest_grade = {
             "content": "-",
@@ -191,11 +193,13 @@ async def get_next_homework(client):
                 homework.deadline.date >= datetime.date.today()
                 and homework.deadline.date <= datetime.date.today() + timedelta(i)
             ):
-                next_homework = {}
-                next_homework["description"] = homework.content
-                next_homework["subject"] = homework.subject.name
-                next_homework["teacher"] = homework.creator.display_name
-                next_homework["date"] = homework.deadline.date.strftime("%d.%m.%Y")
+                next_homework = {
+                    "description": homework.content,
+                    "subject": homework.subject.name,
+                    "teacher": homework.creator.display_name,
+                    "date": homework.deadline.date.strftime("%d.%m.%Y"),
+                }
+
                 if homework.content != None:
                     break
     if next_homework == {}:
@@ -216,8 +220,7 @@ async def get_next_exam(client):
                 exam.deadline.date >= datetime.date.today()
                 and exam.deadline.date <= datetime.date.today() + timedelta(i)
             ):
-                next_exam = {}
-                next_exam["description"] = exam.topic
+                next_exam = {"description": exam.topic}
                 if exam.topic == "":
                     next_exam["description"] = f"{exam.type} {exam.subject.name}"
                 next_exam["subject"] = exam.subject.name
@@ -239,17 +242,16 @@ async def get_next_exam(client):
 
 async def get_latest_message(client):
     async for message in await client.data.get_messages():
-        latest_message = {}
-        latest_message["id"] = message.id
-        latest_message["title"] = message.subject
-        latest_message["content"] = message.content
-        if message.sender is not None:
-            latest_message["sender"] = message.sender.address_name
-        else:
-            latest_message["sender"] = "Nieznany"
-        latest_message[
-            "date"
-        ] = f"{message.sent_date.time.strftime('%H:%M')} {message.sent_date.date.strftime('%d.%m.%Y')}"
+        latest_message = {
+            "id": message.id,
+            "title": message.subject,
+            "content": message.content,
+            "sender": message.sender.address_name
+            if message.sender is not None
+            else "Nieznany",
+            "date": f"{message.sent_date.time.strftime('%H:%M')} {message.sent_date.date.strftime('%d.%m.%Y')}",
+        }
+
     if latest_message == {}:
         latest_message = {
             "id": 0,

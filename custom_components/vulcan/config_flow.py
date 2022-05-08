@@ -148,9 +148,10 @@ class VulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_select_saved_credentials(self, user_input=None, errors=None):
         """Allow user to select saved credentials."""
 
-        credentials = {}
-        for entry in self.hass.config_entries.async_entries(DOMAIN):
-            credentials[entry.entry_id] = entry.data["account"]["UserName"]
+        credentials = {
+            entry.entry_id: entry.data["account"]["UserName"]
+            for entry in self.hass.config_entries.async_entries(DOMAIN)
+        }
 
         if user_input is not None:
             entry = self.hass.config_entries.async_get_entry(user_input["credentials"])
@@ -202,10 +203,7 @@ class VulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_add_next_config_entry(self, user_input=None):
         """Flow initialized when user is adding next entry of that integration."""
 
-        existing_entries = []
-        for entry in self.hass.config_entries.async_entries(DOMAIN):
-            existing_entries.append(entry)
-
+        existing_entries = list(self.hass.config_entries.async_entries(DOMAIN))
         errors = {}
 
         if user_input is not None:
@@ -217,13 +215,17 @@ class VulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             account = Account.load(existing_entries[0].data["account"])
             client = Vulcan(keystore, account, async_get_clientsession(self.hass))
             students = await client.get_students()
-            new_students = []
-            existing_entry_ids = []
-            for entry in self.hass.config_entries.async_entries(DOMAIN):
-                existing_entry_ids.append(entry.data["student_id"])
-            for student in students:
-                if str(student.pupil.id) not in existing_entry_ids:
-                    new_students.append(student)
+            existing_entry_ids = [
+                entry.data["student_id"]
+                for entry in self.hass.config_entries.async_entries(DOMAIN)
+            ]
+
+            new_students = [
+                student
+                for student in students
+                if str(student.pupil.id) not in existing_entry_ids
+            ]
+
             if not new_students:
                 return self.async_abort(reason="all_student_already_configured")
             if len(new_students) == 1:
@@ -285,9 +287,7 @@ class VulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 keystore = credentials["keystore"]
                 client = Vulcan(keystore, account, async_get_clientsession(self.hass))
                 students = await client.get_students()
-                existing_entries = []
-                for entry in self.hass.config_entries.async_entries(DOMAIN):
-                    existing_entries.append(entry)
+                existing_entries = list(self.hass.config_entries.async_entries(DOMAIN))
                 matching_entries = False
                 for student in students:
                     for entry in existing_entries:

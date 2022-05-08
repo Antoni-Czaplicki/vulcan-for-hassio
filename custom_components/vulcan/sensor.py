@@ -242,11 +242,7 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
             self.device_name_tomorrow = ""
             self.num_tomorrow = timedelta(days=0)
 
-        if number >= 10:
-            space = chr(160)
-        else:
-            space = " "
-
+        space = chr(160) if number >= 10 else " "
         self._name = f"Lesson{space}{self.number}{name_tomorrow}{name}"
         self._unique_id = f"lesson_{self.tomorrow}{self.number}_{self.student_id}"
         self._icon = "mdi:timetable"
@@ -260,19 +256,18 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
     @property
     def available(self) -> bool:
         if not self.coordinator.last_update_success:
-            if not self.is_tomorrow:
-                if (
+            if self.is_tomorrow:
+                if self.coordinator.data[f"lessons{self.tomorrow}"][
+                    f"lesson_{self.number}"
+                ]["date"] != datetime.date.today() + timedelta(days=1):
+                    return False
+            elif (
                     self.coordinator.data[f"lessons{self.tomorrow}"][
                         f"lesson_{self.number}"
                     ]["date"]
                     != datetime.date.today()
                 ):
-                    return False
-            else:
-                if self.coordinator.data[f"lessons{self.tomorrow}"][
-                    f"lesson_{self.number}"
-                ]["date"] != datetime.date.today() + timedelta(days=1):
-                    return False
+                return False
         return True
 
     @property
@@ -280,14 +275,13 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
         lesson_info = self.coordinator.data[f"lessons{self.tomorrow}"][
             f"lesson_{self.number}"
         ]
-        atr = {
+        return {
             "room": lesson_info["room"],
             "teacher": lesson_info["teacher"],
             "time": lesson_info["from_to"],
             # "changes": lesson_info["changes"],
             "reason": lesson_info["reason"],
         }
-        return atr
 
     @property
     def device_info(self):
@@ -327,14 +321,12 @@ class LatestAttendance(VulcanEntity):
     @property
     def extra_state_attributes(self):
         att_info = self.latest_attendance
-        atr = {
+        return {
             "Lesson": att_info["lesson_name"],
             "Lesson number": att_info["lesson_number"],
             "Lesson date": att_info["lesson_date"],
             "Lesson time": att_info["lesson_time"],
         }
-
-        return atr
 
     @property
     def device_info(self):
@@ -353,18 +345,17 @@ class LatestAttendance(VulcanEntity):
         except:
             self.latest_attendance = await get_latest_attendance(self.client)
         latest_attendance = self.latest_attendance
-        if self.notify == True:
-            if (
-                self.latest_attendance["content"] != "obecność"
-                and self.latest_attendance["content"] != "-"
-                and self.old_att < self.latest_attendance["datetime"]
-            ):
-                persistent_notification.async_create(
-                    self.hass,
-                    f"{self.latest_attendance['lesson_time']}, {self.latest_attendance['lesson_date']}\n{self.latest_attendance['content']}",
-                    f"{self.device_student_name}Vulcan: Nowy wpis frekwencji na lekcji {self.latest_attendance['lesson_name']}",
-                )
-                self.old_att = self.latest_attendance["datetime"]
+        if self.notify == True and (
+            self.latest_attendance["content"] != "obecność"
+            and self.latest_attendance["content"] != "-"
+            and self.old_att < self.latest_attendance["datetime"]
+        ):
+            persistent_notification.async_create(
+                self.hass,
+                f"{self.latest_attendance['lesson_time']}, {self.latest_attendance['lesson_date']}\n{self.latest_attendance['content']}",
+                f"{self.device_student_name}Vulcan: Nowy wpis frekwencji na lekcji {self.latest_attendance['lesson_name']}",
+            )
+            self.old_att = self.latest_attendance["datetime"]
         self._state = latest_attendance["content"]
 
 
@@ -376,7 +367,7 @@ class LatestMessage(VulcanEntity):
         self.latest_message = data["message"]
         self.notify = data["notify"][CONF_MESSAGE_NOTIFY]
         self.old_msg = self.latest_message["id"]
-        self._state = self.latest_message["title"][0:250]
+        self._state = self.latest_message["title"][:250]
 
         if data["students_number"] == 1:
             name = ""
@@ -391,13 +382,11 @@ class LatestMessage(VulcanEntity):
     @property
     def extra_state_attributes(self):
         msg_info = self.latest_message
-        atr = {
+        return {
             "Sender": msg_info["sender"],
             "Date": msg_info["date"],
             "Content": msg_info["content"],
         }
-
-        return atr
 
     @property
     def device_info(self):
@@ -416,18 +405,14 @@ class LatestMessage(VulcanEntity):
         except:
             self.latest_message = await get_latest_message(self.client)
         message_latest = self.latest_message
-        if self.notify == True:
-            if (
-                self.old_msg != self.latest_message["id"]
-                and self.latest_message["id"] != 0
-            ):
-                persistent_notification.async_create(
-                    self.hass,
-                    f"{self.latest_message['sender']}, {self.latest_message['date']}\n{self.latest_message['content']}",
-                    f"Vulcan: {self.latest_message['title']}",
-                )
-                self.old_msg = self.latest_message["id"]
-        self._state = message_latest["title"][0:250]
+        if self.notify == True and self.old_msg != self.latest_message["id"] != 0:
+            persistent_notification.async_create(
+                self.hass,
+                f"{self.latest_message['sender']}, {self.latest_message['date']}\n{self.latest_message['content']}",
+                f"Vulcan: {self.latest_message['title']}",
+            )
+            self.old_msg = self.latest_message["id"]
+        self._state = message_latest["title"][:250]
 
 
 class LatestGrade(VulcanEntity):
@@ -455,14 +440,13 @@ class LatestGrade(VulcanEntity):
     @property
     def extra_state_attributes(self):
         grade_info = self.latest_grade
-        atr = {
+        return {
             "subject": grade_info["subject"],
             "weight": grade_info["weight"],
             "teacher": grade_info["teacher"],
             "date": grade_info["date"],
             "description": grade_info["description"],
         }
-        return atr
 
     @property
     def device_info(self):
@@ -480,18 +464,17 @@ class LatestGrade(VulcanEntity):
             self.latest_grade = await get_latest_grade(self.client)
         except:
             self.latest_grade = await get_latest_grade(self.client)
-        if self.notify == True:
-            if (
-                self.latest_grade["content"] != "-"
-                and self.old_state
-                != f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
-            ):
-                persistent_notification.async_create(
-                    self.hass,
-                    f"Nowa ocena {self.latest_grade['content']} z {self.latest_grade['subject']} została wystawiona {self.latest_grade['date']} przez {self.latest_grade['teacher']}.",
-                    f"{self.device_student_name}Vulcan: Nowa ocena z {self.latest_grade['subject']}: {self.latest_grade['content']}",
-                )
-                self.old_state = f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
+        if self.notify == True and (
+            self.latest_grade["content"] != "-"
+            and self.old_state
+            != f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
+        ):
+            persistent_notification.async_create(
+                self.hass,
+                f"Nowa ocena {self.latest_grade['content']} z {self.latest_grade['subject']} została wystawiona {self.latest_grade['date']} przez {self.latest_grade['teacher']}.",
+                f"{self.device_student_name}Vulcan: Nowa ocena z {self.latest_grade['subject']}: {self.latest_grade['content']}",
+            )
+            self.old_state = f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
         self._state = self.latest_grade["content"]
 
 
@@ -503,7 +486,7 @@ class NextHomework(VulcanEntity):
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
         self.next_homework = data["homework"]
-        self._state = self.next_homework["description"][0:250]
+        self._state = self.next_homework["description"][:250]
 
         if data["students_number"] == 1:
             name = ""
@@ -518,12 +501,11 @@ class NextHomework(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
-        atr = {
+        return {
             "subject": self.next_homework["subject"],
             "teacher": self.next_homework["teacher"],
             "date": self.next_homework["date"],
         }
-        return atr
 
     @property
     def device_info(self):
@@ -541,7 +523,7 @@ class NextHomework(VulcanEntity):
             self.next_homework = await get_next_homework(self.client)
         except:
             self.next_homework = await get_next_homework(self.client)
-        self._state = self.next_homework["description"][0:250]
+        self._state = self.next_homework["description"][:250]
 
 
 class NextExam(VulcanEntity):
@@ -552,7 +534,7 @@ class NextExam(VulcanEntity):
         self.student_name = self.student_info["full_name"]
         self.student_id = str(self.student_info["id"])
         self.next_exam = data["exam"]
-        self._state = self.next_exam["description"][0:250]
+        self._state = self.next_exam["description"][:250]
 
         if data["students_number"] == 1:
             name = ""
@@ -567,13 +549,12 @@ class NextExam(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
-        atr = {
+        return {
             "subject": self.next_exam["subject"],
             "type": self.next_exam["type"],
             "teacher": self.next_exam["teacher"],
             "date": self.next_exam["date"],
         }
-        return atr
 
     @property
     def device_info(self):
@@ -591,7 +572,7 @@ class NextExam(VulcanEntity):
             self.next_exam = await get_next_exam(self.client)
         except:
             self.next_exam = await get_next_exam(self.client)
-        self._state = self.next_exam["description"][0:250]
+        self._state = self.next_exam["description"][:250]
 
 
 class LuckyNumber(VulcanEntity):
@@ -617,10 +598,9 @@ class LuckyNumber(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
-        atr = {
+        return {
             "date": self.lucky_number["date"],
         }
-        return atr
 
     @property
     def device_info(self):
