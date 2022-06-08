@@ -14,5 +14,5 @@ jobs:
       - name: HACS validation
         uses: "hacs/action@main"
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CATEGORY: "integration"
+          category: "integration"
+          ignore: "brands"
