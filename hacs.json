@@ -1,10 +1,6 @@
 {
     "name":"Uonet+ Vulcan",
     "country":"PL",
-    "domains":[
-        "sensor",
-        "calendar"
-    ],
-    "iot_class":"Cloud Polling",
+    "homeassistant": "2022.5.0",
     "render_readme":true
 }
