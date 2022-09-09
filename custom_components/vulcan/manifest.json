@@ -4,9 +4,9 @@
   "config_flow": true,
   "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
   "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
-  "requirements": ["vulcan-api==2.1.1"],
+  "requirements": ["vulcan-api==2.2.0"],
   "codeowners": ["@Antoni-Czaplicki"],
   "iot_class": "cloud_polling",
   "quality_scale": "silver",
-  "version": "0.13.0"
+  "version": "0.14.0"
 }
