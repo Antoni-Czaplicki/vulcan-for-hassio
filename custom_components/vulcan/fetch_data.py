@@ -1,6 +1,5 @@
 """Support for fetching Vulcan data."""
 import datetime
-from datetime import timedelta
 import re
 
 
@@ -190,7 +189,8 @@ async def get_next_homework(client):
         for i in range(7):
             if (
                 homework.deadline.date >= datetime.date.today()
-                and homework.deadline.date <= datetime.date.today() + timedelta(i)
+                and homework.deadline.date
+                <= datetime.date.today() + datetime.timedelta(i)
             ):
                 next_homework = {}
                 next_homework["description"] = homework.content
@@ -215,7 +215,7 @@ async def get_next_exam(client):
         for i in range(7):
             if (
                 exam.deadline.date >= datetime.date.today()
-                and exam.deadline.date <= datetime.date.today() + timedelta(i)
+                and exam.deadline.date <= datetime.date.today() + datetime.timedelta(i)
             ):
                 next_exam = {}
                 next_exam["description"] = exam.topic
