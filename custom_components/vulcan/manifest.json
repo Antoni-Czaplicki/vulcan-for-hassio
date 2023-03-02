@@ -8,5 +8,5 @@
   "codeowners": ["@Antoni-Czaplicki"],
   "iot_class": "cloud_polling",
   "quality_scale": "silver",
-  "version": "0.14.1"
+  "version": "0.14.2"
 }
