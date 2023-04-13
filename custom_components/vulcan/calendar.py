@@ -1,10 +1,12 @@
 """Support for Vulcan Calendar platform."""
 from __future__ import annotations
 
-import logging
 from datetime import date, datetime, timedelta
+import logging
 
 from aiohttp import ClientConnectorError
+from vulcan import UnauthorizedCertificateException
+
 from homeassistant.components.calendar import (
     ENTITY_ID_FORMAT,
     CalendarEntity,
@@ -16,7 +18,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from vulcan import UnauthorizedCertificateException
+from homeassistant.util.dt import now
 
 from . import DOMAIN
 from .fetch_data import get_lessons, get_student_info
@@ -83,7 +85,9 @@ class VulcanCalendarEntity(CalendarEntity):
         """Return the next upcoming event."""
         return self._event
 
-    async def async_get_events(self, hass, start_date, end_date) -> list[CalendarEvent]:
+    async def async_get_events(
+        self, hass: HomeAssistant, start_date: datetime, end_date: datetime
+    ) -> list[CalendarEvent]:
         """Get all events in a specific time frame."""
         try:
             events = await get_lessons(
@@ -106,8 +110,12 @@ class VulcanCalendarEntity(CalendarEntity):
         event_list = []
         for item in events:
             event = CalendarEvent(
-                start=datetime.combine(item["date"], item["time"].from_),
-                end=datetime.combine(item["date"], item["time"].to),
+                start=datetime.combine(item["date"], item["time"].from_).astimezone(
+                    now().tzinfo
+                ),
+                end=datetime.combine(item["date"], item["time"].to).astimezone(
+                    now().tzinfo
+                ),
                 summary=item["lesson"],
                 location=item["room"],
                 description=item["teacher"],
@@ -156,8 +164,12 @@ class VulcanCalendarEntity(CalendarEntity):
             ),
         )
         self._event = CalendarEvent(
-            start=datetime.combine(new_event["date"], new_event["time"].from_),
-            end=datetime.combine(new_event["date"], new_event["time"].to),
+            start=datetime.combine(
+                new_event["date"], new_event["time"].from_
+            ).astimezone(now().tzinfo),
+            end=datetime.combine(new_event["date"], new_event["time"].to).astimezone(
+                now().tzinfo
+            ),
             summary=new_event["lesson"],
             location=new_event["room"],
             description=new_event["teacher"],
