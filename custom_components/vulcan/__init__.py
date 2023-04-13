@@ -1,16 +1,18 @@
 """The Vulcan component."""
 
 from aiohttp import ClientConnectorError
+from vulcan import Account, Keystore, UnauthorizedCertificateException, Vulcan
+
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity
-from vulcan import Account, Keystore, UnauthorizedCertificateException, Vulcan
 
 from .const import DOMAIN
 
-PLATFORMS = ["calendar", "sensor"]
+PLATFORMS = [Platform.CALENDAR, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -40,16 +42,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not entry.update_listeners:
         entry.add_update_listener(_async_update_options)
 
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        hass.data[DOMAIN].pop(entry.entry_id)
 
-    return True
+    return unload_ok
 
 
 async def _async_update_options(hass, entry):
