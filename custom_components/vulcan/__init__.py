@@ -1,4 +1,5 @@
 """The Vulcan component."""
+import logging
 
 from aiohttp import ClientConnectorError
 from vulcan import Account, Keystore, UnauthorizedCertificateException, Vulcan
@@ -13,6 +14,9 @@ from homeassistant.helpers.entity import Entity
 from .const import DOMAIN
 
 PLATFORMS = [Platform.CALENDAR, Platform.SENSOR]
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -58,6 +62,19 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _async_update_options(hass, entry):
     """Update options."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.debug("Migrating from version %s", config_entry.version)
+
+    if config_entry.version == 1:
+        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry)
+
+    _LOGGER.info("Migration to version %s successful", config_entry.version)
+
+    return True
 
 
 class VulcanEntity(Entity):
