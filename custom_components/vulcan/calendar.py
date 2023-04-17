@@ -1,12 +1,10 @@
 """Support for Vulcan Calendar platform."""
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
 import logging
+from datetime import date, datetime, timedelta
 
 from aiohttp import ClientConnectorError
-from vulcan import UnauthorizedCertificateException
-
 from homeassistant.components.calendar import (
     ENTITY_ID_FORMAT,
     CalendarEntity,
@@ -19,6 +17,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.dt import now
+from vulcan import UnauthorizedCertificateException
 
 from . import DOMAIN
 from .fetch_data import get_lessons, get_student_info
