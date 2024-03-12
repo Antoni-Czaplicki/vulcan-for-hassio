@@ -1,14 +1,16 @@
 """Support for Vulcan sensors."""
+
 import datetime
 import logging
+from asyncio import timeout
 from datetime import timedelta
 
-import async_timeout
 from aiohttp import ClientConnectorError
 from homeassistant.components import persistent_notification
 from homeassistant.components.sensor import ENTITY_ID_FORMAT
 from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.exceptions import PlatformNotReady
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.update_coordinator import (
@@ -43,6 +45,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up the Vulcan sensor entry."""
     global SCAN_INTERVAL
     SCAN_INTERVAL = (
         timedelta(minutes=config_entry.options.get(CONF_SCAN_INTERVAL))
@@ -53,7 +56,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     async def async_update_data():
         try:
-            async with async_timeout.timeout(30):
+            async with timeout(30):
                 return {
                     "lessons": await get_lessons(
                         client,
@@ -70,7 +73,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                         ),
                     ),
                 }
-        except UnauthorizedCertificateException as err:
+        except UnauthorizedCertificateException:
             _LOGGER.error(
                 "The certificate is not authorized, please authorize integration again."
             )
@@ -81,9 +84,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                 )
             )
         except ClientConnectorError as err:
-            raise UpdateFailed(f"Error communicating with API: {err}")
+            raise UpdateFailed(f"Error communicating with API: {err}") from err
         except Exception as err:
-            raise UpdateFailed(err)
+            raise UpdateFailed(err) from err
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -120,7 +123,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                 "Connection error - please check your internet connection: %s", err
             )
             hass.data[DOMAIN]["connection_error"] = True
-        raise PlatformNotReady
+        raise PlatformNotReady from err
 
     entities = [
         LatestGrade(
@@ -213,7 +216,20 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
+    """Represents a lesson entity for the Vulcan integration."""
+
     def __init__(self, coordinator, data, number, entity_id, is_tomorrow=False):
+        """Initialize the VulcanLessonEntity class.
+
+        Args:
+            coordinator (Coordinator): The coordinator object.
+            data (dict): The data dictionary.
+            number (int): The lesson number.
+            entity_id (str): The entity ID.
+            is_tomorrow (bool, optional): Flag indicating if the lesson is for tomorrow. Defaults to False.
+
+        """
+
         super().__init__(coordinator)
         self.entity_id = entity_id
         self.is_tomorrow = is_tomorrow
@@ -229,7 +245,7 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
             self.device_student_name = f"{self.student_info['full_name']}: "
 
         self.number = str(number)
-        if self.is_tomorrow == True:
+        if self.is_tomorrow is True:
             self.tomorrow = "_t"
             name_tomorrow = " (Tomorrow)"
             self.tomorrow_device_id = "tomorrow_"
@@ -253,12 +269,14 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
 
     @property
     def state(self):
+        """Return the state of the lesson."""
         return self.coordinator.data[f"lessons{self.tomorrow}"][
             f"lesson_{self.number}"
         ]["lesson"]
 
     @property
     def available(self) -> bool:
+        """Check if the lesson is available."""
         if not self.coordinator.last_update_success:
             if not self.is_tomorrow:
                 if (
@@ -268,15 +286,15 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
                     != datetime.date.today()
                 ):
                     return False
-            else:
-                if self.coordinator.data[f"lessons{self.tomorrow}"][
-                    f"lesson_{self.number}"
-                ]["date"] != datetime.date.today() + timedelta(days=1):
-                    return False
+            elif self.coordinator.data[f"lessons{self.tomorrow}"][
+                f"lesson_{self.number}"
+            ]["date"] != datetime.date.today() + timedelta(days=1):
+                return False
         return True
 
     @property
     def extra_state_attributes(self):
+        """Return the extra state attributes of the lesson."""
         lesson_info = self.coordinator.data[f"lessons{self.tomorrow}"][
             f"lesson_{self.number}"
         ]
@@ -291,6 +309,7 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
 
     @property
     def device_info(self):
+        """Return device information for the Timetable."""
         return {
             "identifiers": {
                 (DOMAIN, f"{self.tomorrow_device_id}timetable_{self.student_id}")
@@ -304,7 +323,10 @@ class VulcanLessonEntity(CoordinatorEntity, VulcanEntity):
 
 
 class LatestAttendance(VulcanEntity):
+    """Represents the latest attendance for a student."""
+
     def __init__(self, client, data, entity_id):
+        """Initialize the Vulcan sensor."""
         self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
@@ -326,6 +348,7 @@ class LatestAttendance(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
+        """Return the extra state attributes of the attendance."""
         att_info = self.latest_attendance
         atr = {
             "Lesson": att_info["lesson_name"],
@@ -338,6 +361,7 @@ class LatestAttendance(VulcanEntity):
 
     @property
     def device_info(self):
+        """Return device information for the Attendance."""
         return {
             "identifiers": {(DOMAIN, f"attendance{self.student_id}")},
             "manufacturer": "Uonet +",
@@ -348,28 +372,41 @@ class LatestAttendance(VulcanEntity):
         }
 
     async def async_update(self):
+        """Update the sensor state."""
         try:
             self.latest_attendance = await get_latest_attendance(self.client)
-        except:
+        except Exception:
             self.latest_attendance = await get_latest_attendance(self.client)
         latest_attendance = self.latest_attendance
-        if self.notify == True:
-            if (
-                self.latest_attendance["content"] != "obecność"
-                and self.latest_attendance["content"] != "-"
-                and self.old_att < self.latest_attendance["datetime"]
-            ):
+        if (
+            self.latest_attendance["content"] != "-"
+            and self.old_att < self.latest_attendance["datetime"]
+        ):
+            if self.notify is True and self.latest_attendance["content"] != "obecność":
                 persistent_notification.async_create(
                     self.hass,
                     f"{self.latest_attendance['lesson_time']}, {self.latest_attendance['lesson_date']}\n{self.latest_attendance['content']}",
                     f"{self.device_student_name}Vulcan: Nowy wpis frekwencji na lekcji {self.latest_attendance['lesson_name']}",
                 )
-                self.old_att = self.latest_attendance["datetime"]
+            self.old_att = self.latest_attendance["datetime"]
+            device_registry = dr.async_get(self.hass)
+            device_entry = device_registry.async_get_device(
+                identifiers={(DOMAIN, f"attendance{self.student_id}")}
+            )
+            if device_entry:
+                event_data = {
+                    "device_id": device_entry.id,
+                    "type": "new_attendance",
+                }
+                self.hass.bus.async_fire("vulcan_event", event_data)
         self._state = latest_attendance["content"]
 
 
 class LatestMessage(VulcanEntity):
+    """Represents the latest message entity."""
+
     def __init__(self, client, data, entity_id):
+        """Initialize the sensor."""
         self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
@@ -390,6 +427,7 @@ class LatestMessage(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
+        """Return extra state attributes for the sensor."""
         msg_info = self.latest_message
         atr = {
             "Sender": msg_info["sender"],
@@ -401,6 +439,7 @@ class LatestMessage(VulcanEntity):
 
     @property
     def device_info(self):
+        """Return device information for the sensor."""
         return {
             "identifiers": {(DOMAIN, f"message{self.student_info['id']}")},
             "manufacturer": "Uonet +",
@@ -411,27 +450,37 @@ class LatestMessage(VulcanEntity):
         }
 
     async def async_update(self):
+        """Update the sensor state with the latest message."""
         try:
             self.latest_message = await get_latest_message(self.client)
-        except:
+        except Exception:
             self.latest_message = await get_latest_message(self.client)
-        message_latest = self.latest_message
-        if self.notify == True:
-            if (
-                self.old_msg != self.latest_message["id"]
-                and self.latest_message["id"] != 0
-            ):
+        if self.old_msg != self.latest_message["id"] and self.latest_message["id"] != 0:
+            if self.notify is True:
                 persistent_notification.async_create(
                     self.hass,
                     f"{self.latest_message['sender']}, {self.latest_message['date']}\n{self.latest_message['content']}",
                     f"Vulcan: {self.latest_message['title']}",
                 )
-                self.old_msg = self.latest_message["id"]
-        self._state = message_latest["title"][0:250]
+            self.old_msg = self.latest_message["id"]
+            device_registry = dr.async_get(self.hass)
+            device_entry = device_registry.async_get_device(
+                identifiers={(DOMAIN, f"message{self.student_info['id']}")},
+            )
+            if device_entry:
+                event_data = {
+                    "device_id": device_entry.id,
+                    "type": "new_message",
+                }
+                self.hass.bus.async_fire("vulcan_event", event_data)
+        self._state = self.latest_message["title"][0:250]
 
 
 class LatestGrade(VulcanEntity):
+    """Represents the latest grade entity."""
+
     def __init__(self, client, data, entity_id):
+        """Initialize the sensor."""
         self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
@@ -454,6 +503,7 @@ class LatestGrade(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
+        """Return extra state attributes for the sensor."""
         grade_info = self.latest_grade
         atr = {
             "subject": grade_info["subject"],
@@ -466,6 +516,7 @@ class LatestGrade(VulcanEntity):
 
     @property
     def device_info(self):
+        """Return device information for the sensor."""
         return {
             "identifiers": {(DOMAIN, f"grade{self.student_id}")},
             "manufacturer": "Uonet +",
@@ -476,27 +527,41 @@ class LatestGrade(VulcanEntity):
         }
 
     async def async_update(self):
+        """Update the sensor state with the latest grade information."""
         try:
             self.latest_grade = await get_latest_grade(self.client)
-        except:
+        except Exception:
             self.latest_grade = await get_latest_grade(self.client)
-        if self.notify == True:
-            if (
-                self.latest_grade["content"] != "-"
-                and self.old_state
-                != f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
-            ):
+        if (
+            self.latest_grade["content"] != "-"
+            and self.old_state
+            != f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
+        ):
+            if self.notify is True:
                 persistent_notification.async_create(
                     self.hass,
                     f"Nowa ocena {self.latest_grade['content']} z {self.latest_grade['subject']} została wystawiona {self.latest_grade['date']} przez {self.latest_grade['teacher']}.",
                     f"{self.device_student_name}Vulcan: Nowa ocena z {self.latest_grade['subject']}: {self.latest_grade['content']}",
                 )
-                self.old_state = f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
+            self.old_state = f"{self.latest_grade['content']}_{self.latest_grade['subject']}_{self.latest_grade['date']}_{self.latest_grade['description']}"
+            device_registry = dr.async_get(self.hass)
+            device_entry = device_registry.async_get_device(
+                identifiers={(DOMAIN, f"message{self.student_info['id']}")},
+            )
+            if device_entry:
+                event_data = {
+                    "device_id": device_entry.id,
+                    "type": "new_grade",
+                }
+                self.hass.bus.async_fire("vulcan_event", event_data)
         self._state = self.latest_grade["content"]
 
 
 class NextHomework(VulcanEntity):
+    """Represents the next homework for a student."""
+
     def __init__(self, client, data, entity_id):
+        """Initialize the VulcanEntity class."""
         self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
@@ -518,6 +583,7 @@ class NextHomework(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
+        """Return extra state attributes for the sensor."""
         atr = {
             "subject": self.next_homework["subject"],
             "teacher": self.next_homework["teacher"],
@@ -527,6 +593,7 @@ class NextHomework(VulcanEntity):
 
     @property
     def device_info(self):
+        """Return device information for the sensor."""
         return {
             "identifiers": {(DOMAIN, f"homework{self.student_id}")},
             "manufacturer": "Uonet +",
@@ -537,15 +604,19 @@ class NextHomework(VulcanEntity):
         }
 
     async def async_update(self):
+        """Update the state of the sensor with the next homework information."""
         try:
             self.next_homework = await get_next_homework(self.client)
-        except:
+        except Exception:
             self.next_homework = await get_next_homework(self.client)
         self._state = self.next_homework["description"][0:250]
 
 
 class NextExam(VulcanEntity):
+    """Represents the next exam for a student."""
+
     def __init__(self, client, data, entity_id):
+        """Initialize the NextExam class."""
         self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
@@ -567,6 +638,7 @@ class NextExam(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
+        """Return extra state attributes for the sensor."""
         atr = {
             "subject": self.next_exam["subject"],
             "type": self.next_exam["type"],
@@ -577,6 +649,7 @@ class NextExam(VulcanEntity):
 
     @property
     def device_info(self):
+        """Return device information for the sensor."""
         return {
             "identifiers": {(DOMAIN, f"exam{self.student_id}")},
             "manufacturer": "Uonet +",
@@ -587,15 +660,19 @@ class NextExam(VulcanEntity):
         }
 
     async def async_update(self):
+        """Update the state of the sensor with the next exam information."""
         try:
             self.next_exam = await get_next_exam(self.client)
-        except:
+        except Exception:
             self.next_exam = await get_next_exam(self.client)
         self._state = self.next_exam["description"][0:250]
 
 
 class LuckyNumber(VulcanEntity):
+    """Represents the lucky number for a student."""
+
     def __init__(self, client, data, entity_id):
+        """Initialize the LuckyNumber class."""
         self.entity_id = entity_id
         self.client = client
         self.student_info = data["student_info"]
@@ -617,6 +694,7 @@ class LuckyNumber(VulcanEntity):
 
     @property
     def extra_state_attributes(self):
+        """Return extra state attributes for the sensor."""
         atr = {
             "date": self.lucky_number["date"],
         }
@@ -624,6 +702,7 @@ class LuckyNumber(VulcanEntity):
 
     @property
     def device_info(self):
+        """Return device information for the sensor."""
         return {
             "identifiers": {(DOMAIN, f"lucky_number{self.student_id}")},
             "manufacturer": "Uonet +",
@@ -634,8 +713,9 @@ class LuckyNumber(VulcanEntity):
         }
 
     async def async_update(self):
+        """Update the state of the sensor."""
         try:
             self.lucky_number = await get_lucky_number(self.client)
-        except:
+        except Exception:
             self.lucky_number = await get_lucky_number(self.client)
         self._state = self.lucky_number["number"]

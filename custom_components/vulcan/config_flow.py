@@ -1,4 +1,5 @@
 """Adds config flow for Vulcan."""
+
 import logging
 
 import homeassistant.helpers.config_validation as cv
@@ -123,9 +124,9 @@ class VulcanFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         students = {}
         if self.students is not None:
             for student in self.students:
-                students[
-                    str(student.pupil.id)
-                ] = f"{student.pupil.first_name} {student.pupil.last_name}"
+                students[str(student.pupil.id)] = (
+                    f"{student.pupil.first_name} {student.pupil.last_name}"
+                )
         if user_input is not None:
             student_id = user_input["student"]
             await self.async_set_unique_id(str(student_id))
