@@ -1,12 +1,12 @@
 {
   "domain": "vulcan",
   "name": "Uonet+ Vulcan",
+  "codeowners": ["@Antoni-Czaplicki"],
   "config_flow": true,
   "documentation": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio",
-  "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
-  "requirements": ["vulcan-api==2.3.2"],
-  "codeowners": ["@Antoni-Czaplicki"],
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
   "quality_scale": "silver",
+  "requirements": ["vulcan-api==2.3.2"],
   "version": "0.16.0"
 }
