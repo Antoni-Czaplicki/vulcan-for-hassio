@@ -305,7 +305,7 @@ async def get_latest_message(client):
             latest_message["content"] = re.sub(
                 re.compile("<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});"),
                 "",
-                message.content,
+                message.content.replace("<br>", "\n").replace("</p>", "\n"),
             )
             if message.sender is not None:
                 latest_message["sender"] = message.sender.name
