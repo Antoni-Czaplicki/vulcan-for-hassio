@@ -296,24 +296,25 @@ async def get_latest_message(client):
 
     """
     latest_message: dict[str, int | str] = {"timestamp": 0}
-    async for messagebox in await client.data.get_message_boxes():
-        async for message in await client.data.get_messages(messagebox.global_key):
-            if message.sent_date.timestamp > latest_message["timestamp"]:
-                latest_message["id"] = message.id
-                latest_message["title"] = message.subject
-                latest_message["content"] = re.sub(
-                    re.compile("<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});"),
-                    "",
-                    message.content,
-                )
-                if message.sender is not None:
-                    latest_message["sender"] = message.sender.name
-                else:
-                    latest_message["sender"] = "Nieznany"
-                latest_message["date"] = (
-                    f"{message.sent_date.time.strftime('%H:%M')} {message.sent_date.date.strftime('%d.%m.%Y')}"
-                )
-                latest_message["timestamp"] = message.sent_date.timestamp
+    async for message in await client.data.get_messages(
+        client.student.message_box.global_key
+    ):
+        if message.sent_date.timestamp > latest_message["timestamp"]:
+            latest_message["id"] = message.id
+            latest_message["title"] = message.subject
+            latest_message["content"] = re.sub(
+                re.compile("<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});"),
+                "",
+                message.content,
+            )
+            if message.sender is not None:
+                latest_message["sender"] = message.sender.name
+            else:
+                latest_message["sender"] = "Nieznany"
+            latest_message["date"] = (
+                f"{message.sent_date.time.strftime('%H:%M')} {message.sent_date.date.strftime('%d.%m.%Y')}"
+            )
+            latest_message["timestamp"] = message.sent_date.timestamp
     if not latest_message:
         latest_message = {
             "id": 0,
