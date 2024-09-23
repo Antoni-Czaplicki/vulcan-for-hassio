@@ -8,5 +8,5 @@
   "issue_tracker": "https://github.com/Antoni-Czaplicki/vulcan-for-hassio/issues",
   "quality_scale": "silver",
   "requirements": ["vulcan-api==2.4.0"],
-  "version": "0.16.1"
+  "version": "0.17.0"
 }

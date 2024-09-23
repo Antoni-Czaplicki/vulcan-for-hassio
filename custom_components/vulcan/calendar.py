@@ -134,18 +134,21 @@ class VulcanLessonsCalendarEntity(CalendarEntity):
 
         event_list = []
         for item in events:
-            event = CalendarEvent(
-                start=datetime.combine(item["date"], item["time"].from_).replace(
-                    tzinfo=ZoneInfo("Europe/Warsaw")
-                ),
-                end=datetime.combine(item["date"], item["time"].to).replace(
-                    tzinfo=ZoneInfo("Europe/Warsaw")
-                ),
-                summary=item["lesson"],
-                location=item["room"],
-                description=item["teacher"],
-            )
-
+            try:
+                event = CalendarEvent(
+                    start=datetime.combine(item["date"], item["time"].from_).replace(
+                        tzinfo=ZoneInfo("Europe/Warsaw")
+                    ),
+                    end=datetime.combine(item["date"], item["time"].to).replace(
+                        tzinfo=ZoneInfo("Europe/Warsaw")
+                    ),
+                    summary=item["lesson"],
+                    location=item["room"],
+                    description=item["teacher"],
+                )
+            except Exception as err:
+                _LOGGER.error("Error: %s", err)
+                continue
             event_list.append(event)
 
         return event_list

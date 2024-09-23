@@ -47,6 +47,12 @@ async def get_lessons(
         temp_dict["lesson"] = (
             lesson.subject.name if lesson.subject is not None else None
         )
+        if lesson.event is not None:
+            temp_dict["lesson"] = (
+                lesson.event + f" - {temp_dict['lesson']}"
+                if temp_dict["lesson"] is not None
+                else lesson.event
+            )
         if lesson.room is not None:
             temp_dict["room"] = lesson.room.code
         else:
